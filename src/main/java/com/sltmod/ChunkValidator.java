@@ -1,0 +1,229 @@
+package com.sltmod;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.LevelChunk;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Comprehensive chunk validation before processing
+ */
+public class ChunkValidator {
+
+    // Cached blacklists
+    private static final Set<ResourceLocation> BLACKLISTED_DIMENSIONS = new HashSet<>();
+    private static final Set<ResourceLocation> BLACKLISTED_BIOMES = new HashSet<>();
+
+    // Statistics
+    private static final AtomicLong totalValidations = new AtomicLong(0);
+    private static final AtomicLong dimensionRejects = new AtomicLong(0);
+    private static final AtomicLong biomeRejects = new AtomicLong(0);
+    private static final AtomicLong emptyChunkRejects = new AtomicLong(0);
+    private static final AtomicLong otherRejects = new AtomicLong(0);
+
+    static {
+        loadBlacklists();
+    }
+
+    /**
+     * Load blacklists from configuration
+     */
+    private static void loadBlacklists() {
+        // Load dimension blacklist
+        List<? extends String> dimBlacklist = LayeredTerrainConfig.BLACKLISTED_DIMENSIONS.get();
+        for (String dim : dimBlacklist) {
+            try {
+                BLACKLISTED_DIMENSIONS.add(new ResourceLocation(dim));
+            } catch (Exception e) {
+                LayeredTerrainMod.LOGGER.warn("Invalid dimension ID: {}", dim);
+            }
+        }
+
+        // Load biome blacklist
+        List<? extends String> biomeBlacklist = LayeredTerrainConfig.BLACKLISTED_BIOMES.get();
+        for (String biome : biomeBlacklist) {
+            try {
+                BLACKLISTED_BIOMES.add(new ResourceLocation(biome));
+            } catch (Exception e) {
+                LayeredTerrainMod.LOGGER.warn("Invalid biome ID: {}", biome);
+            }
+        }
+
+        if (!BLACKLISTED_DIMENSIONS.isEmpty()) {
+            LayeredTerrainMod.LOGGER.info("Blacklisted dimensions: {}", BLACKLISTED_DIMENSIONS);
+        }
+        if (!BLACKLISTED_BIOMES.isEmpty()) {
+            LayeredTerrainMod.LOGGER.info("Blacklisted biomes: {}", BLACKLISTED_BIOMES);
+        }
+    }
+
+    /**
+     * Validate chunk for processing
+     *
+     * @param chunk Chunk to validate
+     * @return true if valid, false if should skip
+     */
+    public static boolean isValidForProcessing(LevelChunk chunk) {
+        totalValidations.incrementAndGet();
+
+        // 1. Null check
+        if (chunk == null) {
+            otherRejects.incrementAndGet();
+            return false;
+        }
+
+        // 2. Empty chunk check
+        if (chunk.isEmpty()) {
+            emptyChunkRejects.incrementAndGet();
+            return false;
+        }
+
+        // 3. Dimension check
+        if (!isValidDimension(chunk)) {
+            dimensionRejects.incrementAndGet();
+            return false;
+        }
+
+        // 4. Biome check
+        if (!isValidBiome(chunk)) {
+            biomeRejects.incrementAndGet();
+            return false;
+        }
+
+        // 5. Custom validation hooks (for future extensibility)
+        if (!runCustomValidations(chunk)) {
+            otherRejects.incrementAndGet();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if dimension is valid
+     */
+    private static boolean isValidDimension(LevelChunk chunk) {
+        if (BLACKLISTED_DIMENSIONS.isEmpty()) {
+            return true;
+        }
+
+        try {
+            ResourceLocation dimId = chunk.getLevel().dimension().location();
+            return !BLACKLISTED_DIMENSIONS.contains(dimId);
+        } catch (Exception e) {
+            LayeredTerrainMod.LOGGER.debug("Error checking dimension", e);
+            return true; // Fail open
+        }
+    }
+
+    /**
+     * Check if biomes in chunk are valid
+     */
+    private static boolean isValidBiome(LevelChunk chunk) {
+        if (BLACKLISTED_BIOMES.isEmpty()) {
+            return true;
+        }
+
+        try {
+            // Sample a few positions in the chunk
+            int[] sampleX = {0, 8, 15};
+            int[] sampleZ = {0, 8, 15};
+
+            for (int x : sampleX) {
+                for (int z : sampleZ) {
+                    BlockPos pos = new BlockPos(
+                        chunk.getPos().getMinBlockX() + x,
+                        64,
+                        chunk.getPos().getMinBlockZ() + z
+                    );
+
+                    Holder<Biome> biomeHolder = chunk.getLevel().getBiome(pos);
+                    ResourceLocation biomeId = biomeHolder.unwrapKey()
+                        .map(key -> key.location())
+                        .orElse(null);
+
+                    if (biomeId != null && BLACKLISTED_BIOMES.contains(biomeId)) {
+                        if (LayeredTerrainConfig.DEBUG_MODE.get()) {
+                            LayeredTerrainMod.LOGGER.debug(
+                                "Chunk {} rejected due to blacklisted biome: {}",
+                                chunk.getPos(), biomeId
+                            );
+                        }
+                        return false;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            LayeredTerrainMod.LOGGER.debug("Error checking biomes", e);
+            return true; // Fail open
+        }
+
+        return true;
+    }
+
+    /**
+     * Run custom validation hooks
+     * Placeholder for future extensibility
+     */
+    private static boolean runCustomValidations(LevelChunk chunk) {
+        // Future: Allow mods to register custom validators
+        return true;
+    }
+
+    /**
+     * Get validation statistics
+     */
+    public static ValidationStats getStats() {
+        long total = totalValidations.get();
+        long rejected = dimensionRejects.get() + biomeRejects.get() +
+                       emptyChunkRejects.get() + otherRejects.get();
+        double rejectRate = total > 0 ? (double) rejected / total * 100 : 0;
+
+        return new ValidationStats(
+            total,
+            dimensionRejects.get(),
+            biomeRejects.get(),
+            emptyChunkRejects.get(),
+            otherRejects.get(),
+            rejectRate
+        );
+    }
+
+    public static class ValidationStats {
+        public final long totalValidations;
+        public final long dimensionRejects;
+        public final long biomeRejects;
+        public final long emptyChunkRejects;
+        public final long otherRejects;
+        public final double rejectRate;
+
+        ValidationStats(long total, long dim, long biome, long empty, long other, double rate) {
+            this.totalValidations = total;
+            this.dimensionRejects = dim;
+            this.biomeRejects = biome;
+            this.emptyChunkRejects = empty;
+            this.otherRejects = other;
+            this.rejectRate = rate;
+        }
+
+        public long getTotalRejects() {
+            return dimensionRejects + biomeRejects + emptyChunkRejects + otherRejects;
+        }
+    }
+
+    /**
+     * Reload blacklists (for hot-reload)
+     */
+    public static void reloadBlacklists() {
+        BLACKLISTED_DIMENSIONS.clear();
+        BLACKLISTED_BIOMES.clear();
+        loadBlacklists();
+    }
+}
