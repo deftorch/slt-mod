@@ -1,0 +1,300 @@
+# Smooth Layered Terrain System v3.2
+# .gitignore
+
+# ============================================================================
+# Gradle
+# ============================================================================
+.gradle/
+build/
+out/
+bin/
+
+# Gradle wrapper (keep wrapper jar)
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Gradle cache
+.gradle-cache/
+
+# ============================================================================
+# IDE - IntelliJ IDEA
+# ============================================================================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IntelliJ IDEA run configs (keep custom ones if needed)
+.idea/runConfigurations/
+
+# IntelliJ user-specific files
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Generated files
+.idea/**/contentModel.xml
+.idea/**/modules.xml
+.idea/**/*.iml
+
+# Sensitive data
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# ============================================================================
+# IDE - Eclipse
+# ============================================================================
+.classpath
+.project
+.settings/
+*.launch
+*.class
+
+# Eclipse specific
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# ============================================================================
+# IDE - VSCode
+# ============================================================================
+.vscode/
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+
+# ============================================================================
+# Minecraft Development
+# ============================================================================
+
+# Minecraft run directories
+run/
+runs/
+
+# Minecraft logs
+logs/
+crash-reports/
+debug/
+
+# Minecraft worlds (for testing)
+world/
+saves/
+
+# Minecraft server files
+server.properties
+server.jar
+eula.txt
+banned-ips.json
+banned-players.json
+ops.json
+usercache.json
+whitelist.json
+
+# Minecraft client cache
+libraries/
+versions/
+assets/
+
+# ============================================================================
+# Java
+# ============================================================================
+*.class
+*.jar
+*.war
+*.ear
+
+# Don't ignore gradle wrapper jar
+!gradle/wrapper/*.jar
+
+# Package files
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# ============================================================================
+# OS
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# macOS Thumbnails
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================================
+# Documentation
+# ============================================================================
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Documentation backups (from migration script)
+docs_backup_*/
+
+# Generated documentation
+javadoc/
+target/site/
+
+# Node modules (if using for docs generation)
+node_modules/
+package-lock.json
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+# JUnit
+junit*.properties
+TEST-*.xml
+
+# Test output
+test-output/
+test-results/
+
+# Coverage reports
+.jacoco/
+jacoco.exec
+coverage/
+
+# ============================================================================
+# Build Artifacts
+# ============================================================================
+
+# Compiled output
+*.class
+*.log
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Don't ignore important jars
+!gradle/wrapper/gradle-wrapper.jar
+
+# ============================================================================
+# Temporary Files
+# ============================================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# Security
+# ============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.p12
+
+# ============================================================================
+# Performance Profiling
+# ============================================================================
+*.hprof
+*.nps
+*.prof
+
+# VisualVM
+*.jfr
+
+# ============================================================================
+# Misc
+# ============================================================================
+
+# Logs
+*.log
+logs/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local configuration
+local.properties
+config/local-*.toml
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# ============================================================================
+# Keep These Files
+# ============================================================================
+
+# Important: Don't ignore these
+!.gitignore
+!.gitattributes
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Documentation
+!README.md
+!LICENSE
+!CONTRIBUTING.md
+!CHANGELOG.md
+!docs/**/*.md
+
+# Configuration examples
+!config/*.example.toml
+!config/presets/*.toml
