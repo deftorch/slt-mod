@@ -14,6 +14,11 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link NBTHelper}.
+ *
+ * <p>Verifies that processing state is correctly persisted to and loaded from NBT tags.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 public class NBTPersistenceTest {
 

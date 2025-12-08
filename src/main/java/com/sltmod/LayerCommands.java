@@ -16,11 +16,25 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Comprehensive admin command system
+ * Registers and handles administrative commands for the Layered Terrain System.
+ *
+ * <p>Provides the {@code /layerterrain} command suite, which allows administrators to:
+ * <ul>
+ *   <li>View system statistics and metrics.</li>
+ *   <li>Run diagnostics and health checks.</li>
+ *   <li>Manage configuration hot-reloading.</li>
+ *   <li>Trigger manual reprocessing of chunks.</li>
+ * </ul>
+ * </p>
  */
 @Mod.EventBusSubscriber
 public class LayerCommands {
 
+    /**
+     * Event handler for registering commands during server startup.
+     *
+     * @param event The command registration event.
+     */
     @SubscribeEvent
     public static void onCommandRegister(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();

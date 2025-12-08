@@ -1,9 +1,18 @@
 package com.sltmod;
 
+/**
+ * Exports metrics in a format compatible with Prometheus.
+ *
+ * <p>Allows external monitoring systems to scrape performance data. Currently implemented
+ * as a stub/example for future expansion.</p>
+ */
 public class PrometheusExporter {
 
     private static boolean enabled = false;
 
+    /**
+     * Initializes the exporter.
+     */
     public static void initialize() {
         enabled = LayeredTerrainConfig.ENABLE_PROMETHEUS.get();
 
@@ -23,7 +32,8 @@ public class PrometheusExporter {
     }
 
     /**
-     * Export metrics in Prometheus format
+     * Generates a string containing metrics in Prometheus text format.
+     * @return Prometheus metrics string.
      */
     public static String exportMetrics() {
         if (!enabled) return "";
@@ -42,6 +52,9 @@ public class PrometheusExporter {
         return sb.toString();
     }
 
+    /**
+     * Shuts down the exporter.
+     */
     public static void shutdown() {
         if (enabled) {
             LayeredTerrainMod.LOGGER.info("Prometheus exporter shutdown");

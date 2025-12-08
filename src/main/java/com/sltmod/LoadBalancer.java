@@ -8,6 +8,21 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.*;
 
+/**
+ * Manages load balancing of chunk processing tasks across multiple worker threads.
+ *
+ * <p>This class implements several strategies to distribute work efficiently:
+ * <ul>
+ *   <li>{@link LayeredTerrainConfig.LoadBalancingStrategy#ROUND_ROBIN}: Sequential distribution.</li>
+ *   <li>{@link LayeredTerrainConfig.LoadBalancingStrategy#LEAST_LOADED}: Assigns to thread with fewest tasks.</li>
+ *   <li>{@link LayeredTerrainConfig.LoadBalancingStrategy#WORK_STEALING}: Allows idle threads to take work.</li>
+ *   <li>{@link LayeredTerrainConfig.LoadBalancingStrategy#PRIORITY_BASED}: Dedicates threads to high-priority chunks.</li>
+ *   <li>{@link LayeredTerrainConfig.LoadBalancingStrategy#ADAPTIVE}: Dynamically switches strategies based on load.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>It maintains separate queues for each worker thread to minimize contention.</p>
+ */
 public class LoadBalancer {
 
     public static ExecutorService[] workerPools;
@@ -36,6 +51,12 @@ public class LoadBalancer {
         }
     }
 
+    /**
+     * Initializes the load balancer thread pools and data structures.
+     *
+     * <p>Creates dedicated single-thread executors for each worker and initializes
+     * task queues. Takes no action if load balancing is disabled in config.</p>
+     */
     @SuppressWarnings("unchecked")
     public static void initialize() {
         if (!LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get()) {
@@ -74,7 +95,13 @@ public class LoadBalancer {
     }
 
     /**
-     * Submit chunk for processing with intelligent routing
+     * Submits a chunk for processing, routing it to the optimal thread.
+     *
+     * <p>Calculates the priority of the chunk based on player proximity and assigns
+     * it to a worker thread according to the active load balancing strategy.</p>
+     *
+     * @param chunk The chunk to process.
+     * @param nearbyPlayers A collection of players near this chunk, used for priority calculation.
      */
     public static void submitChunk(LevelChunk chunk, Collection<ServerPlayer> nearbyPlayers) {
         if (!LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get()) {
@@ -334,7 +361,10 @@ public class LoadBalancer {
     }
 
     /**
-     * Reconfigure on config change
+     * Reconfigures the load balancer when settings change.
+     *
+     * <p>Updates the active strategy. If load balancing is disabled, it shuts down
+     * the system.</p>
      */
     public static void reconfigure() {
         LayeredTerrainMod.LOGGER.info("Reconfiguring load balancer...");
@@ -350,7 +380,9 @@ public class LoadBalancer {
     }
 
     /**
-     * Get load balancer statistics
+     * Returns a string representation of the current load statistics.
+     *
+     * @return A formatted string showing current strategy and load per thread.
      */
     public static String getStats() {
         if (threadLoads == null) return "Load balancer not initialized";
@@ -368,7 +400,7 @@ public class LoadBalancer {
     }
 
     /**
-     * Shutdown load balancer
+     * Shuts down all worker threads and cleans up resources.
      */
     public static void shutdown() {
         if (workerPools == null) return;

@@ -8,7 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Detailed performance profiling system
+ * Detailed low-level performance profiling system.
+ *
+ * <p>Tracks execution time for specific processing stages (e.g., "slope_calculation", "smoothing_pass_1").
+ * Useful for identifying bottlenecks in the pipeline. Enabled via configuration.</p>
  */
 public class ProfilingMetrics {
 
@@ -16,6 +19,9 @@ public class ProfilingMetrics {
     private static final Map<String, AtomicLong> counts = new ConcurrentHashMap<>();
     private static boolean enabled = false;
 
+    /**
+     * Initializes profiling if enabled in config.
+     */
     public static void initialize() {
         enabled = LayeredTerrainConfig.ENABLE_PROFILING.get();
 
@@ -50,7 +56,10 @@ public class ProfilingMetrics {
     }
 
     /**
-     * Record timing for a stage
+     * Records a duration for a named stage.
+     *
+     * @param stage The name of the stage.
+     * @param nanos Duration in nanoseconds.
      */
     public static void record(String stage, long nanos) {
         if (!enabled) return;
@@ -60,7 +69,12 @@ public class ProfilingMetrics {
     }
 
     /**
-     * Measure execution time of a supplier
+     * Measures the execution time of a {@link java.util.function.Supplier}.
+     *
+     * @param stage The name of the stage.
+     * @param task The task to execute.
+     * @param <T> The return type.
+     * @return The result of the task.
      */
     public static <T> T measure(String stage, java.util.function.Supplier<T> task) {
         if (!enabled) {
@@ -76,7 +90,10 @@ public class ProfilingMetrics {
     }
 
     /**
-     * Measure execution time of a runnable
+     * Measures the execution time of a {@link Runnable}.
+     *
+     * @param stage The name of the stage.
+     * @param task The task to execute.
      */
     public static void measure(String stage, Runnable task) {
         if (!enabled) {
@@ -93,7 +110,7 @@ public class ProfilingMetrics {
     }
 
     /**
-     * Print detailed profiling report
+     * Prints a detailed breakdown of time spent in each stage.
      */
     public static void printDetailedReport() {
         if (!enabled || timings.isEmpty()) {
@@ -152,6 +169,9 @@ public class ProfilingMetrics {
         return sb.toString();
     }
 
+    /**
+     * Resets profiling data.
+     */
     public static void reset() {
         timings.clear();
         counts.clear();

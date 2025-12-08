@@ -5,8 +5,11 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Converts normalized slopes to block thickness values
- * Supports ML prediction for faster processing
+ * Handles the conversion of terrain slope data into block thickness values.
+ *
+ * <p>This class translates normalized slope values into an integer thickness (1-8),
+ * where 1 is the thinnest layer and 8 is a full block. It incorporates biome-specific
+ * scaling factors and optional Machine Learning predictions to optimize the process.</p>
  */
 public class ThicknessConverter {
 
@@ -21,10 +24,13 @@ public class ThicknessConverter {
     private static final AtomicLong totalConversions = new AtomicLong(0);
 
     /**
-     * Convert single normalized slope to thickness
+     * Converts a single normalized slope value into a block thickness.
      *
-     * @param normalizedSlope Normalized slope value (0.0 to ~20.0)
-     * @return Thickness value (1-8)
+     * <p>The conversion uses the configured global scale factor.
+     * Formula: {@code thickness = 8 - (slope * scale)}.</p>
+     *
+     * @param normalizedSlope The normalized slope value (typically 0.0 to ~20.0).
+     * @return The calculated thickness (1-8).
      */
     public static int slopeToThickness(float normalizedSlope) {
         // Validate input
@@ -62,12 +68,15 @@ public class ThicknessConverter {
     }
 
     /**
-     * Convert entire chunk with biome-aware scaling
-     * Supports ML prediction if enabled and available
+     * Converts a grid of normalized slopes into a grid of thickness values for a chunk.
      *
-     * @param normalizedSlopes 16×16 array of normalized slopes
-     * @param chunk Chunk for biome lookups
-     * @return 16×16 array of thickness values
+     * <p>This method supports biome-aware scaling (via {@link BiomeBlender}) and
+     * can optionally offload prediction to an ML model if enabled.</p>
+     *
+     * @param normalizedSlopes The 16x16 array of normalized slopes.
+     * @param chunk The level chunk, used for biome lookup.
+     * @return A 16x16 array of integer thickness values.
+     * @throws IllegalArgumentException if inputs are null or invalid.
      */
     public static int[][] convertToThickness(float[][] normalizedSlopes, LevelChunk chunk) {
         // Validate inputs
@@ -189,7 +198,9 @@ public class ThicknessConverter {
     }
 
     /**
-     * Get conversion statistics
+     * Returns statistics about the conversion process, including ML usage.
+     *
+     * @return A snapshot of the current conversion statistics.
      */
     public static ConversionStats getStats() {
         long total = totalConversions.get();
@@ -201,12 +212,22 @@ public class ThicknessConverter {
         return new ConversionStats(total, ml, fallback, mlRate);
     }
 
+    /**
+     * Data class holding statistics about thickness conversions.
+     */
     public static class ConversionStats {
         public final long totalConversions;
         public final long mlPredictions;
         public final long mlFallbacks;
         public final double mlUsageRate;
 
+        /**
+         * Constructs a new ConversionStats object.
+         * @param total Total number of conversions.
+         * @param ml Number of ML-predicted conversions.
+         * @param fallback Number of times ML failed and fallback was used.
+         * @param rate Percentage of conversions handled by ML.
+         */
         ConversionStats(long total, long ml, long fallback, double rate) {
             this.totalConversions = total;
             this.mlPredictions = ml;
@@ -216,7 +237,7 @@ public class ThicknessConverter {
     }
 
     /**
-     * Reset statistics
+     * Resets the conversion statistics counters.
      */
     public static void resetStats() {
         mlPredictions.set(0);

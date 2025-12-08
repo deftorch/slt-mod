@@ -7,7 +7,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Queue manager for pending chunk calculations
+ * Manages the queue of chunks waiting for terrain processing.
+ *
+ * <p>This class acts as a buffer between the main thread (where chunks are loaded)
+ * and the {@link AsyncProcessor}. It uses weak references to hold chunks to prevent
+ * memory leaks if chunks are unloaded while in the queue.</p>
  */
 public class QueueManager {
 
@@ -40,6 +44,14 @@ public class QueueManager {
         }
     }
 
+    /**
+     * Submits a chunk to the processing queue.
+     *
+     * <p>Rejects the chunk if the queue is full (configured via {@code MAX_QUEUE_SIZE}).</p>
+     *
+     * @param chunk The chunk to process.
+     * @return True if submitted, false if the queue was full.
+     */
     public static boolean submit(LevelChunk chunk) {
         int maxSize = LayeredTerrainConfig.MAX_QUEUE_SIZE.get();
 
@@ -56,6 +68,14 @@ public class QueueManager {
         return true;
     }
 
+    /**
+     * Processes items from the queue and submits them to the {@link AsyncProcessor}.
+     *
+     * <p>Called every tick. Processes up to {@code MAX_CHUNKS_PER_TICK} items.
+     * Skips chunks that are no longer valid (unloaded).</p>
+     *
+     * @return The number of chunks processed.
+     */
     public static int processQueue() {
         int maxPerTick = LayeredTerrainConfig.MAX_CHUNKS_PER_TICK.get();
         int processed = 0;
@@ -88,10 +108,17 @@ public class QueueManager {
         return processed;
     }
 
+    /**
+     * Returns the current number of items in the queue.
+     * @return Queue size.
+     */
     public static int getQueueSize() {
         return queueSize.get();
     }
 
+    /**
+     * Clears the queue.
+     */
     public static void clear() {
         QUEUE.clear();
         queueSize.set(0);

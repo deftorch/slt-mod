@@ -8,6 +8,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for the {@link SlopeCalculator} class.
+ *
+ * <p>Verifies slope calculation logic, including grid sampling, damping, and edge case handling.</p>
+ */
 @ExtendWith(MockitoExtension.class)
 public class SlopeCalculatorTest {
 

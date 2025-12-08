@@ -13,7 +13,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Optimized lighting updater with selective heightmap updates
+ * Manages lighting updates for modified chunks.
+ *
+ * <p>After placing layers, lighting must be recalculated to prevent dark spots or artifacts.
+ * This class optimizes the process by updating only relevant heightmaps and batching
+ * light engine requests.</p>
  */
 public class LightingUpdater {
 
@@ -23,7 +27,12 @@ public class LightingUpdater {
     private static final LongAdder totalUpdateTime = new LongAdder();
 
     /**
-     * Update lighting for chunk with optimization options
+     * Performs a batch lighting update for the specified chunk.
+     *
+     * <p>Updates internal heightmaps (e.g. {@code MOTION_BLOCKING}) and queues updates
+     * to the lighting engine for the modified block columns.</p>
+     *
+     * @param chunk The chunk that was modified.
      */
     public static void batchUpdateLighting(LevelChunk chunk) {
         long startTime = System.nanoTime();
@@ -162,7 +171,9 @@ public class LightingUpdater {
     }
 
     /**
-     * Get lighting update statistics
+     * Get lighting update statistics.
+     *
+     * @return A {@link LightingStats} object.
      */
     public static LightingStats getStats() {
         long total = totalUpdates.get();
@@ -172,6 +183,9 @@ public class LightingUpdater {
         return new LightingStats(total, batch, avgMs);
     }
 
+    /**
+     * Data class for lighting statistics.
+     */
     public static class LightingStats {
         public final long totalUpdates;
         public final long batchUpdates;
@@ -183,6 +197,10 @@ public class LightingUpdater {
             this.avgTimeMs = avg;
         }
 
+        /**
+         * Calculates the percentage of updates that used batching.
+         * @return Batch rate (0-100).
+         */
         public double getBatchRate() {
             return totalUpdates > 0 ? (double) batchUpdates / totalUpdates * 100 : 0;
         }
