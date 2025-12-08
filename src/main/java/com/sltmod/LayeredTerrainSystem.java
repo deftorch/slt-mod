@@ -15,7 +15,6 @@ import java.util.List;
  */
 public class LayeredTerrainSystem {
 
-    private static int tickCounter = 0;
     private static int healthCheckCounter = 0;
 
     /**
@@ -58,8 +57,6 @@ public class LayeredTerrainSystem {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         if (!LayeredTerrainConfig.ENABLED.get()) return;
-
-        tickCounter++;
 
         // Hot-reload check (every tick is fine, it's lightweight)
         LayeredTerrainConfig.checkConfigReload();

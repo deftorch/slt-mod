@@ -2,6 +2,7 @@ package com.sltmod;
 
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -126,24 +127,11 @@ public class EdgeCaseFilter {
      * Check if block is part of a structure
      */
     private static boolean isPartOfStructure(LevelChunk chunk, BlockPos pos) {
-        // TODO: Fix structure checking for 1.20.1
-        // The legacy code used chunk.getAllReferences() which returns Map<Structure, LongSet>
-        // but finding bounding box from LongSet (packed positions) is not straightforward without looking up StructureStart
-        return false;
-        /*
-        try {
-            // Check structure references
-            return chunk.getAllReferences().values().stream()
-                .flatMap(java.util.Set::stream)
-                .anyMatch(ref -> ref.getBoundingBox().isInside(pos));
-        } catch (Exception e) {
-            // Fail safe - don't skip if check errors
-            if (LayeredTerrainConfig.DEBUG_MODE.get()) {
-                LayeredTerrainMod.LOGGER.debug("Structure check error at {}", pos, e);
-            }
-            return false;
+        if (chunk.getLevel() instanceof ServerLevel serverLevel) {
+            // Use StructureManager from server level to check for structures
+            return !serverLevel.structureManager().getAllStructuresAt(pos).isEmpty();
         }
-        */
+        return false;
     }
 
     /**
@@ -192,7 +180,8 @@ public class EdgeCaseFilter {
         }
 
         // If more than 60% air, it's likely a cave opening
-        return airCount > (CAVE_DEPTH_CHECK * 0.6);
+        // Ensure there is at least one solid block to avoid detecting vertical shafts/quarries as caves
+        return airCount > (CAVE_DEPTH_CHECK * 0.6) && solidCount > 0;
     }
 
     /**

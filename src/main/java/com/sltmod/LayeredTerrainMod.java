@@ -22,10 +22,10 @@ public class LayeredTerrainMod {
 
     private static long initStartTime;
 
-    public LayeredTerrainMod() {
+    public LayeredTerrainMod(FMLJavaModLoadingContext context) {
         initStartTime = System.currentTimeMillis();
 
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus modEventBus = context.getModEventBus();
 
         // Register configuration
         ModLoadingContext.get().registerConfig(
