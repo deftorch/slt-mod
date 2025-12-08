@@ -39,7 +39,12 @@ public class ChunkValidator {
         List<? extends String> dimBlacklist = LayeredTerrainConfig.BLACKLISTED_DIMENSIONS.get();
         for (String dim : dimBlacklist) {
             try {
-                BLACKLISTED_DIMENSIONS.add(new ResourceLocation(dim));
+                ResourceLocation loc = ResourceLocation.tryParse(dim);
+                if (loc != null) {
+                    BLACKLISTED_DIMENSIONS.add(loc);
+                } else {
+                    LayeredTerrainMod.LOGGER.warn("Invalid dimension ID format: {}", dim);
+                }
             } catch (Exception e) {
                 LayeredTerrainMod.LOGGER.warn("Invalid dimension ID: {}", dim);
             }
@@ -49,7 +54,12 @@ public class ChunkValidator {
         List<? extends String> biomeBlacklist = LayeredTerrainConfig.BLACKLISTED_BIOMES.get();
         for (String biome : biomeBlacklist) {
             try {
-                BLACKLISTED_BIOMES.add(new ResourceLocation(biome));
+                ResourceLocation loc = ResourceLocation.tryParse(biome);
+                if (loc != null) {
+                    BLACKLISTED_BIOMES.add(loc);
+                } else {
+                    LayeredTerrainMod.LOGGER.warn("Invalid biome ID format: {}", biome);
+                }
             } catch (Exception e) {
                 LayeredTerrainMod.LOGGER.warn("Invalid biome ID: {}", biome);
             }

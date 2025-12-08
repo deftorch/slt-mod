@@ -88,15 +88,19 @@ public class LayerRegistry {
 
         for (String blockId : whitelist) {
             try {
-                ResourceLocation loc = new ResourceLocation(blockId);
-                Block block = BuiltInRegistries.BLOCK.get(loc);
+                ResourceLocation loc = ResourceLocation.tryParse(blockId);
+                if (loc != null) {
+                    Block block = BuiltInRegistries.BLOCK.get(loc);
 
-                if (block != null && block != Blocks.AIR) {
-                    WHITELISTED_BLOCKS.add(block);
-                    LayeredTerrainMod.LOGGER.debug("Whitelisted block: {}", blockId);
+                    if (block != null && block != Blocks.AIR) {
+                        WHITELISTED_BLOCKS.add(block);
+                        LayeredTerrainMod.LOGGER.debug("Whitelisted block: {}", blockId);
+                    }
+                } else {
+                    LayeredTerrainMod.LOGGER.warn("Invalid block ID format in whitelist: {}", blockId);
                 }
             } catch (Exception e) {
-                LayeredTerrainMod.LOGGER.warn("Invalid block ID in whitelist: {}", blockId);
+                LayeredTerrainMod.LOGGER.warn("Error processing whitelist block: {}", blockId);
             }
         }
 

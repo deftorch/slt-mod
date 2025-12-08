@@ -13,9 +13,6 @@ public class AsyncProcessor {
     private static ExecutorService CALCULATOR;
     private static final ResultCache RESULTS = new ResultCache();
 
-    // Timeout configuration
-    private static final long DEFAULT_TIMEOUT_MS = 5000;
-
     // Statistics
     private static final AtomicLong calculationsStarted = new AtomicLong(0);
     private static final AtomicLong calculationsCompleted = new AtomicLong(0);
@@ -142,16 +139,13 @@ public class AsyncProcessor {
      * Perform the actual thickness calculation
      */
     private static int[][] performCalculation(LevelChunk chunk, ChunkPos pos) {
-        HeightmapCache cache = null;
+        // Step 1: Heightmap cache
+        // ProfilingMetrics.measure returns the result.
+        // We construct it via measure.
+        final HeightmapCache finalCache = ProfilingMetrics.measure("heightmap_cache",
+            () -> new HeightmapCache(chunk));
 
         try {
-            // Step 1: Heightmap cache
-            // We can't use cache in lambda if it's not final, so we construct it via measure but assign to cache
-            // However, ProfilingMetrics.measure returns the result.
-            HeightmapCache tempCache = ProfilingMetrics.measure("heightmap_cache",
-                () -> new HeightmapCache(chunk));
-            cache = tempCache;
-            final HeightmapCache finalCache = cache;
 
             // Step 2: Calculate slopes
             int[][] rawSlopes = ProfilingMetrics.measure("slope_calculation",
@@ -170,7 +164,6 @@ public class AsyncProcessor {
             int[][] smoothed = rawThickness;
 
             for (int pass = 0; pass < passes; pass++) {
-                final int currentPass = pass;
                 final int[][] input = smoothed;
                 // finalCache is already available
 
@@ -188,8 +181,8 @@ public class AsyncProcessor {
 
         } finally {
             // Always release cache
-            if (cache != null) {
-                cache.release();
+            if (finalCache != null) {
+                finalCache.release();
             }
         }
     }

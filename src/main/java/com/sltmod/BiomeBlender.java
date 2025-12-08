@@ -21,7 +21,6 @@ public class BiomeBlender {
 
     // Constants
     private static final float DEFAULT_SCALE = 1.2f;
-    private static final double EXTREME_TRANSITION_THRESHOLD = 0.5;
     private static final int MAX_BLEND_RADIUS = 4;
 
     /**
