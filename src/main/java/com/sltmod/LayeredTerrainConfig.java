@@ -904,9 +904,11 @@ public class LayeredTerrainConfig {
      * Initialize file watcher for real-time config changes
      */
     private static void initializeFileWatcher() {
-        if (!ENABLE_HOT_RELOAD.get()) return;
-
+        // Safe check for hot reload setting which might not be built yet if called from static block
+        // Actually ENABLE_HOT_RELOAD is defined above, so it should be fine.
         try {
+            if (!ENABLE_HOT_RELOAD.get()) return;
+
             Path configDir = FMLPaths.CONFIGDIR.get();
             watchService = FileSystems.getDefault().newWatchService();
             watchKey = configDir.register(
@@ -916,8 +918,8 @@ public class LayeredTerrainConfig {
 
             LayeredTerrainMod.LOGGER.info("File watcher initialized for hot-reload");
 
-        } catch (IOException e) {
-            LayeredTerrainMod.LOGGER.warn("Could not initialize file watcher", e);
+        } catch (Exception e) {
+            LayeredTerrainMod.LOGGER.warn("Could not initialize file watcher: {}", e.getMessage());
             watchService = null;
         }
     }

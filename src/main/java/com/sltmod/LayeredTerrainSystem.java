@@ -27,6 +27,9 @@ public class LayeredTerrainSystem {
         if (chunk.getLevel().isClientSide()) return;
         if (!LayeredTerrainConfig.ENABLED.get()) return;
 
+        // Restore processing state from NBT
+        NBTHelper.loadFromNBT(chunk, event.getData());
+
         // Validate chunk
         if (!ChunkValidator.isValidForProcessing(chunk)) {
             return;
@@ -47,6 +50,16 @@ public class LayeredTerrainSystem {
                     "Queue full, skipped chunk {}", chunk.getPos()
                 );
             }
+        }
+    }
+
+    /**
+     * Handle chunk save events
+     */
+    @SubscribeEvent
+    public static void onChunkSave(ChunkDataEvent.Save event) {
+        if (event.getChunk() instanceof LevelChunk chunk) {
+            NBTHelper.saveToNBT(chunk, event.getData());
         }
     }
 
