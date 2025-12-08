@@ -8,8 +8,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Helper for chunk processing metadata.
- * Note: NBT persistence disabled for compatibility - using runtime tracking.
+ * Helper class for managing NBT data associated with chunks.
+ *
+ * <p>Tracks whether chunks have been processed by the mod to avoid redundant calculations.
+ * Supports saving this state to NBT data (persisted to disk) and reloading it.</p>
  */
 public class NBTHelper {
 
@@ -23,14 +25,19 @@ public class NBTHelper {
     }
 
     /**
-     * Check if chunk has been processed
+     * Check if chunk has been processed.
+     *
+     * @param chunk The chunk to check.
+     * @return True if processed.
      */
     public static boolean isProcessed(LevelChunk chunk) {
         return PROCESSED_CHUNKS.contains(chunk.getPos());
     }
 
     /**
-     * Mark chunk as processed
+     * Mark chunk as processed.
+     *
+     * @param chunk The chunk to mark.
      */
     public static void markAsProcessed(LevelChunk chunk) {
         PROCESSED_CHUNKS.add(chunk.getPos());
@@ -38,12 +45,20 @@ public class NBTHelper {
     }
 
     /**
-     * Clear processed flag (for reprocessing)
+     * Clear processed flag (for reprocessing).
+     *
+     * @param chunk The chunk to reset.
      */
     public static void clearProcessedFlag(LevelChunk chunk) {
         PROCESSED_CHUNKS.remove(chunk.getPos());
     }
 
+    /**
+     * Saves mod data to the chunk's NBT tag.
+     *
+     * @param chunk The chunk.
+     * @param tag The root NBT tag of the chunk.
+     */
     public static void saveToNBT(LevelChunk chunk, CompoundTag tag) {
         if (isProcessed(chunk)) {
             CompoundTag modTag = tag.getCompound(NBT_ROOT_KEY);
@@ -53,6 +68,12 @@ public class NBTHelper {
         }
     }
 
+    /**
+     * Loads mod data from the chunk's NBT tag.
+     *
+     * @param chunk The chunk.
+     * @param tag The root NBT tag of the chunk.
+     */
     public static void loadFromNBT(LevelChunk chunk, CompoundTag tag) {
         if (tag.contains(NBT_ROOT_KEY)) {
             CompoundTag modTag = tag.getCompound(NBT_ROOT_KEY);
@@ -64,12 +85,18 @@ public class NBTHelper {
     }
 
     /**
-     * Get processing metadata (Stubbed)
+     * Get processing metadata (Stubbed).
+     *
+     * @param chunk The chunk.
+     * @return Metadata object or null.
      */
     public static ProcessingMetadata getMetadata(LevelChunk chunk) {
         return null; // Not supported in runtime-only mode
     }
 
+    /**
+     * Data class for processing metadata.
+     */
     public static class ProcessingMetadata {
         public final int version;
         public final long timestamp;
@@ -93,7 +120,7 @@ public class NBTHelper {
     }
 
     /**
-     * Update config hash when configuration changes
+     * Update config hash when configuration changes.
      */
     public static void updateConfigHash() {
         try {

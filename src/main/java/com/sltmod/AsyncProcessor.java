@@ -6,7 +6,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Enhanced async processor with timeout, priority queue, and load balancer integration
+ * Enhanced async processor that manages background calculation of terrain layers.
+ *
+ * <p>This class uses a thread pool to offload heavy terrain processing from the main server thread.
+ * It integrates with:</p>
+ * <ul>
+ *   <li>{@link CircuitBreakerAdvanced}: To fail fast when errors occur.</li>
+ *   <li>{@link LoadBalancer}: To distribute work intelligently (if enabled).</li>
+ *   <li>{@link ResultCache}: To store completed calculations for later application.</li>
+ * </ul>
+ *
+ * <p>It also enforces timeouts to prevent stuck threads and tracks detailed statistics.</p>
  */
 public class AsyncProcessor {
 
@@ -19,6 +29,12 @@ public class AsyncProcessor {
     private static final AtomicLong calculationsTimedOut = new AtomicLong(0);
     private static final AtomicLong calculationsFailed = new AtomicLong(0);
 
+    /**
+     * Initializes the async processor and its thread pool.
+     *
+     * <p>Creates a fixed thread pool based on the configured number of worker threads.
+     * Also initializes the {@link Smoother}'s thread pool.</p>
+     */
     public static void initialize() {
         int threads = LayeredTerrainConfig.WORKER_THREADS.get();
         if (threads == 0) {
@@ -39,8 +55,12 @@ public class AsyncProcessor {
     }
 
     /**
-     * Submit chunk for async calculation with priority
-     * Routes through load balancer if enabled
+     * Submits a chunk for asynchronous calculation.
+     *
+     * <p>Checks the circuit breaker status first. If the load balancer is enabled,
+     * routes the request there; otherwise, submits directly to the local executor.</p>
+     *
+     * @param chunk The chunk to process.
      */
     public static void submitChunkForCalculation(LevelChunk chunk) {
         if (chunk == null || chunk.isEmpty()) {
@@ -88,8 +108,16 @@ public class AsyncProcessor {
     }
 
     /**
-     * Internal calculation method with timeout protection
-     * Package-private for LoadBalancer access
+     * Performs the internal calculation for a chunk with timeout protection.
+     *
+     * <p>This method runs the full pipeline: {@link HeightmapCache} creation,
+     * {@link SlopeCalculator}, {@link ThicknessConverter}, and {@link Smoother}.
+     * It wraps execution in a {@link CompletableFuture} to enforce the configured timeout.</p>
+     *
+     * <p>Visible for package-private access by {@link LoadBalancer}.</p>
+     *
+     * @param chunk The chunk to process.
+     * @param pos The position of the chunk.
      */
     static void calculateThicknessMapInternal(LevelChunk chunk, ChunkPos pos) {
         long startTime = System.nanoTime();
@@ -207,12 +235,19 @@ public class AsyncProcessor {
         return java.util.Collections.emptyList();
     }
 
+    /**
+     * Retrieves the cache of completed results.
+     *
+     * @return The singleton {@link ResultCache} instance.
+     */
     public static ResultCache getResults() {
         return RESULTS;
     }
 
     /**
-     * Get processor statistics
+     * Gets current statistics for the processor.
+     *
+     * @return A {@link ProcessorStats} object containing started, completed, and failed counts.
      */
     public static ProcessorStats getStats() {
         return new ProcessorStats(
@@ -225,12 +260,21 @@ public class AsyncProcessor {
         );
     }
 
+    /**
+     * Data class for processor statistics.
+     */
     public static class ProcessorStats {
+        /** Number of calculations started. */
         public final long started;
+        /** Number of calculations successfully completed. */
         public final long completed;
+        /** Number of calculations that timed out. */
         public final long timedOut;
+        /** Number of calculations that failed with an exception. */
         public final long failed;
+        /** Number of results currently waiting in cache. */
         public final int queuedResults;
+        /** Average calculation time in milliseconds. */
         public final double avgTimeMs;
 
         ProcessorStats(long s, long c, long t, long f, int q, double avg) {
@@ -242,11 +286,21 @@ public class AsyncProcessor {
             this.avgTimeMs = avg;
         }
 
+        /**
+         * Calculates the success rate as a percentage.
+         * @return Success rate (0.0 to 100.0).
+         */
         public double getSuccessRate() {
             return started > 0 ? (double) completed / started * 100 : 0;
         }
     }
 
+    /**
+     * Shuts down the processor and its thread pools.
+     *
+     * <p>Attempts a graceful shutdown, waiting for running tasks to complete up to a timeout.
+     * Also shuts down the {@link Smoother} and clears the result cache.</p>
+     */
     public static void shutdown() {
         if (CALCULATOR != null && !CALCULATOR.isShutdown()) {
             LayeredTerrainMod.LOGGER.info("Shutting down async processor...");

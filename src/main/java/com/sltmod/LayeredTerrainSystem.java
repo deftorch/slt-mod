@@ -11,14 +11,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Main system orchestrator - coordinates all components
+ * Main system orchestrator that coordinates all components of the Layered Terrain System.
+ *
+ * <p>This class acts as the central hub, listening to Forge events to trigger chunk processing.
+ * It manages the flow from chunk loading to validation, queue submission, and final
+ * application of terrain layers.</p>
+ *
+ * <p>It handles:</p>
+ * <ul>
+ *   <li>{@link ChunkDataEvent.Load}: Validates and queues chunks for processing.</li>
+ *   <li>{@link ChunkDataEvent.Save}: Persists processing state to NBT.</li>
+ *   <li>{@link TickEvent.ServerTickEvent}: Drives the async queue and applies results.</li>
+ * </ul>
+ *
+ * <p>The class also manages health checks and integrates with the {@link AsyncProcessor}
+ * to handle off-thread calculations.</p>
  */
 public class LayeredTerrainSystem {
 
     private static int healthCheckCounter = 0;
 
     /**
-     * Handle chunk load events
+     * Handles the chunk load event to initiate terrain processing.
+     *
+     * <p>Checks if the chunk is valid, not yet processed, and if the system is enabled.
+     * If all checks pass, the chunk is submitted to the {@link QueueManager} for
+     * asynchronous processing.</p>
+     *
+     * @param event The chunk load event triggered by Forge.
      */
     @SubscribeEvent
     public static void onChunkLoad(ChunkDataEvent.Load event) {
@@ -54,7 +74,12 @@ public class LayeredTerrainSystem {
     }
 
     /**
-     * Handle chunk save events
+     * Handles the chunk save event to persist state.
+     *
+     * <p>Saves the processing status (whether the chunk has already been layered)
+     * to the chunk's NBT data.</p>
+     *
+     * @param event The chunk save event triggered by Forge.
      */
     @SubscribeEvent
     public static void onChunkSave(ChunkDataEvent.Save event) {
@@ -64,7 +89,18 @@ public class LayeredTerrainSystem {
     }
 
     /**
-     * Handle server tick events
+     * Handles the server tick event to drive the processing loop.
+     *
+     * <p>Performs the following actions every tick (or periodically):
+     * <ul>
+     *   <li>Checks for configuration hot-reloads.</li>
+     *   <li>Processes the chunk queue via {@link QueueManager}.</li>
+     *   <li>Applies pending calculations to chunks in the world.</li>
+     *   <li>Runs system health checks at configured intervals.</li>
+     * </ul>
+     * </p>
+     *
+     * @param event The server tick event.
      */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -95,7 +131,13 @@ public class LayeredTerrainSystem {
     }
 
     /**
-     * Apply pending calculations from async processor
+     * Applies pending calculations from the async processor to the world.
+     *
+     * <p>Polls the {@link ResultCache} for completed thickness maps and applies them
+     * to the corresponding chunks. Limits the number of applications per tick
+     * to prevent lag.</p>
+     *
+     * @param level The server level to apply changes to.
      */
     private static void applyPendingCalculations(ServerLevel level) {
         ResultCache results = AsyncProcessor.getResults();
@@ -133,7 +175,15 @@ public class LayeredTerrainSystem {
     }
 
     /**
-     * Apply calculated layers to chunk
+     * Applies the calculated thickness map to a chunk.
+     *
+     * <p>This method performs the final block placement and lighting updates.
+     * It tracks performance metrics for block placement and lighting separately.</p>
+     *
+     * @param chunk The chunk to modify.
+     * @param thicknessMap The calculated thickness values for the chunk.
+     * @param calculationTime The time taken to calculate the thickness map (in nanoseconds).
+     * @throws Exception If an error occurs during block placement.
      */
     private static void applyLayersToChunk(
         LevelChunk chunk,
@@ -186,7 +236,13 @@ public class LayeredTerrainSystem {
     }
 
     /**
-     * Synchronous processing (fallback or testing)
+     * Processes a chunk synchronously.
+     *
+     * <p>This is a fallback or testing method that performs all steps (slope calculation,
+     * smoothing, block placement) on the current thread. It bypasses the async queue.</p>
+     *
+     * @param chunk The chunk to process.
+     * @throws IllegalArgumentException if the chunk is null or empty.
      */
     public static void processChunkSync(LevelChunk chunk) {
         if (chunk == null || chunk.isEmpty()) {

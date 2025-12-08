@@ -12,7 +12,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Optimized block placer with batch operations
+ * Handles the actual placement of terrain layers in the world.
+ *
+ * <p>This class collects all necessary block updates for a chunk and applies them in bulk.
+ * It uses optimized block flags to minimize client updates and neighbor notifications
+ * during the bulk placement phase.</p>
  */
 public class BlockPlacer {
 
@@ -28,12 +32,20 @@ public class BlockPlacer {
     private static final AtomicLong failedPlacements = new AtomicLong(0);
 
     /**
-     * Place layers optimized with batch processing
+     * Places layer blocks for a chunk based on the calculated thickness map.
      *
-     * @param chunk Chunk to modify
-     * @param cache Heightmap cache
-     * @param thicknessMap Calculated thickness values
-     * @return Number of blocks placed
+     * <p>This method runs in two phases:
+     * <ol>
+     *   <li><b>Collection:</b> Iterates through the chunk, checking edge cases via {@link EdgeCaseFilter},
+     *       and determining the correct layer block via {@link LayerRegistry}.</li>
+     *   <li><b>Placement:</b> Applies the block changes to the world.</li>
+     * </ol>
+     * </p>
+     *
+     * @param chunk The chunk to modify.
+     * @param cache The heightmap cache (for positioning).
+     * @param thicknessMap The 16x16 array of thickness values.
+     * @return The number of blocks successfully placed.
      */
     public static int placeLayersOptimized(
         LevelChunk chunk,
@@ -144,7 +156,8 @@ public class BlockPlacer {
     }
 
     /**
-     * Get placement statistics
+     * Retrieves statistics about block placement operations.
+     * @return A {@link PlacementStats} object.
      */
     public static PlacementStats getStats() {
         long total = totalPlacements.get();

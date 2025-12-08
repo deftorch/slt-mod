@@ -12,8 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Advanced layer registry with tag-based detection and explicit mappings
- * Supports mod compatibility through blacklisting and whitelisting
+ * Advanced layer registry with tag-based detection and explicit mappings.
+ *
+ * <p>This class manages the relationship between full blocks and their layered counterparts.
+ * It supports:</p>
+ * <ul>
+ *   <li><b>Explicit Mappings:</b> Hardcoded associations for vanilla blocks.</li>
+ *   <li><b>Tag Detection:</b> Auto-detects modded blocks based on tags (e.g. {@code #minecraft:dirt}).</li>
+ *   <li><b>Whitelisting/Blacklisting:</b> Configurable inclusions and exclusions.</li>
+ * </ul>
  */
 public class LayerRegistry {
 
@@ -32,6 +39,9 @@ public class LayerRegistry {
     private static final AtomicInteger tagDetections = new AtomicInteger(0);
     private static final AtomicInteger explicitMappings = new AtomicInteger(0);
 
+    /**
+     * Categories for grouping similar blocks during auto-detection.
+     */
     enum BlockCategory {
         GRASS_LIKE,
         DIRT_LIKE,
@@ -43,7 +53,7 @@ public class LayerRegistry {
     }
 
     /**
-     * Initialize layer registry with default mappings
+     * Initialize layer registry with default mappings and configuration.
      */
     public static void initialize() {
         LayeredTerrainMod.LOGGER.info("Initializing layer registry...");
@@ -255,11 +265,11 @@ public class LayerRegistry {
     }
 
     /**
-     * Get layer block for base block and thickness
+     * Get layer block for base block and thickness.
      *
-     * @param baseBlock Base block
-     * @param thickness Thickness (1-8)
-     * @return Layer block, or null if not available
+     * @param baseBlock Base block.
+     * @param thickness Thickness (1-8).
+     * @return Layer block, or null if not available.
      */
     public static Block getLayerBlock(Block baseBlock, int thickness) {
         // Validate inputs
@@ -286,7 +296,10 @@ public class LayerRegistry {
     }
 
     /**
-     * Check if block has layer support
+     * Check if block has layer support.
+     *
+     * @param block The block to check.
+     * @return True if supported.
      */
     public static boolean hasLayers(Block block) {
         if (block == null) return false;
@@ -297,7 +310,9 @@ public class LayerRegistry {
     }
 
     /**
-     * Get registry statistics
+     * Get registry statistics.
+     *
+     * @return A {@link RegistryStats} object.
      */
     public static RegistryStats getStats() {
         return new RegistryStats(
@@ -309,6 +324,9 @@ public class LayerRegistry {
         );
     }
 
+    /**
+     * Data class for registry statistics.
+     */
     public static class RegistryStats {
         public final int totalBlocks;
         public final int explicitMappings;
@@ -326,7 +344,7 @@ public class LayerRegistry {
     }
 
     /**
-     * Clear caches (for hot-reload)
+     * Clear caches (for hot-reload).
      */
     public static void clearCaches() {
         CATEGORY_CACHE.clear();

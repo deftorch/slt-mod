@@ -11,8 +11,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Block;
 
 /**
- * Comprehensive integration test suite
- * Run with: /layerterrain test (if enabled)
+ * Comprehensive integration test suite for the mod.
+ *
+ * <p>This class contains tests that verify the interaction between multiple components
+ * of the system. It is designed to be run from within the game using the {@code /layerterrain test} command
+ * (if implemented) or via a test runner.</p>
  */
 public class IntegrationTests {
 
@@ -21,7 +24,10 @@ public class IntegrationTests {
     private static final AtomicInteger testsFailed = new AtomicInteger(0);
 
     /**
-     * Run all integration tests
+     * Executes all registered integration tests.
+     *
+     * <p>Runs component tests followed by end-to-end integration tests. Logs results
+     * to the console/logger.</p>
      */
     public static void runAllTests() {
         LayeredTerrainMod.LOGGER.info("╔════════════════════════════════════════════════════╗");

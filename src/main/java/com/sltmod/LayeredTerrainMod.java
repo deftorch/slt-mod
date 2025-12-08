@@ -13,6 +13,15 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Main mod class for the Layered Terrain System.
+ *
+ * <p>This class initializes the mod, registers event listeners, and manages the lifecycle
+ * of the terrain generation system. It handles startup, configuration loading, and graceful shutdown.
+ *
+ * <p>The mod transforms vanilla Minecraft terrain into smooth, layered landscapes using
+ * sophisticated algorithms and efficient processing.</p>
+ */
 @Mod("layeredterrain")
 public class LayeredTerrainMod {
 
@@ -22,6 +31,11 @@ public class LayeredTerrainMod {
 
     private static long initStartTime;
 
+    /**
+     * Constructs the main mod instance and registers basic event listeners.
+     *
+     * @param context The FML Java mod loading context provided by Forge.
+     */
     public LayeredTerrainMod(FMLJavaModLoadingContext context) {
         initStartTime = System.currentTimeMillis();
 
@@ -43,6 +57,14 @@ public class LayeredTerrainMod {
         LOGGER.info("╚════════════════════════════════════════════════════╝");
     }
 
+    /**
+     * Performs common setup tasks during the FML common setup phase.
+     *
+     * <p>Initializes core systems such as the registry, memory pool, circuit breaker,
+     * and async processors in dependency order.</p>
+     *
+     * @param event The common setup event.
+     */
     private void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             try {
@@ -101,6 +123,13 @@ public class LayeredTerrainMod {
         });
     }
 
+    /**
+     * Handles the server started event.
+     *
+     * <p>Logs configuration details and performs startup diagnostics.</p>
+     *
+     * @param event The server started event.
+     */
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
         LOGGER.info("╔════════════════════════════════════════════════════╗");
@@ -146,6 +175,14 @@ public class LayeredTerrainMod {
         SystemDiagnostics.runStartupCheck();
     }
 
+    /**
+     * Handles the server stopping event.
+     *
+     * <p>Performs graceful shutdown of all systems, releasing resources and printing
+     * final metrics reports.</p>
+     *
+     * @param event The server stopping event.
+     */
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         LOGGER.info("╔════════════════════════════════════════════════════╗");

@@ -8,6 +8,16 @@ import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Configuration management for the Layered Terrain System.
+ *
+ * <p>This class defines all configurable options for the mod, organized into categories
+ * such as Smoothing, Performance, Memory, and more. It utilizes Forge's {@link ForgeConfigSpec}
+ * system for loading and saving configurations to a TOML file.</p>
+ *
+ * <p>It also supports hot-reloading of configurations via file watching and periodic checks,
+ * allowing server admins to tune performance without restarting.</p>
+ */
 public class LayeredTerrainConfig {
 
     public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
@@ -133,6 +143,9 @@ public class LayeredTerrainConfig {
     private static WatchKey watchKey = null;
     private static final AtomicBoolean reloadInProgress = new AtomicBoolean(false);
 
+    /**
+     * Enumeration of available smoothing algorithms.
+     */
     public enum SmoothingType {
         GAUSSIAN("Standard Gaussian smoothing - fast and reliable"),
         BILATERAL("Edge-preserving bilateral filter - 20% slower"),
@@ -152,6 +165,9 @@ public class LayeredTerrainConfig {
         }
     }
 
+    /**
+     * Enumeration of available load balancing strategies.
+     */
     public enum LoadBalancingStrategy {
         ROUND_ROBIN("Distribute work evenly across threads"),
         LEAST_LOADED("Assign to thread with least current work"),
@@ -901,7 +917,7 @@ public class LayeredTerrainConfig {
     }
 
     /**
-     * Initialize file watcher for real-time config changes
+     * Initialize file watcher for real-time config changes.
      */
     private static void initializeFileWatcher() {
         // Safe check for hot reload setting which might not be built yet if called from static block
@@ -925,7 +941,17 @@ public class LayeredTerrainConfig {
     }
 
     /**
-     * Enhanced config reload with file watching
+     * Checks if the configuration file has changed and triggers a reload if necessary.
+     *
+     * <p>This method employs two strategies:
+     * <ol>
+     *   <li>Real-time file watching (if supported by the OS).</li>
+     *   <li>Periodic polling of the file modification time.</li>
+     * </ol>
+     * </p>
+     *
+     * <p>If a change is detected, {@link #performConfigReload()} is called to update
+     * the system state.</p>
      */
     public static void checkConfigReload() {
         if (!ENABLE_HOT_RELOAD.get()) return;
@@ -991,7 +1017,10 @@ public class LayeredTerrainConfig {
     }
 
     /**
-     * Perform the actual config reload
+     * Performs the actual configuration reload.
+     *
+     * <p>Reloads the spec, resets metrics if configured, and reconfigures dependent systems
+     * like memory pools and load balancers.</p>
      */
     private static void performConfigReload() {
         LayeredTerrainMod.LOGGER.info("╔════════════════════════════════════════════════════╗");
@@ -1038,7 +1067,13 @@ public class LayeredTerrainConfig {
     }
 
     /**
-     * Validate configuration on load
+     * Validates the current configuration settings.
+     *
+     * <p>Checks for logical inconsistencies, such as conflicting sampling modes,
+     * or invalid thread counts. Logs warnings for sub-optimal configurations
+     * and throws a {@link RuntimeException} for critical errors.</p>
+     *
+     * @throws RuntimeException if the configuration contains critical errors.
      */
     public static void validateConfig() {
         boolean hasErrors = false;

@@ -10,6 +10,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the {@link TieredMemoryPool} class.
+ *
+ * <p>Uses reflection to inject a mock configuration and verify internal state transitions
+ * between Hot, Warm, and Cold tiers.</p>
+ */
 public class TieredMemoryPoolTest {
 
     // Mock implementation of ConfigProvider
