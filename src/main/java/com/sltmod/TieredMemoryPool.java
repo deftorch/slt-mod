@@ -7,6 +7,29 @@ import java.util.Arrays;
 
 public class TieredMemoryPool {
 
+    // Internal interface for testability
+    interface ConfigProvider {
+        boolean isPoolingEnabled();
+        boolean isTieredPoolingEnabled();
+        int getHotTierSize();
+        int getWarmTierSize();
+        int getColdTierSize();
+        int getSimplePoolSize();
+        int getCleanupIntervalSeconds();
+        boolean isDebugMode();
+    }
+
+    private static ConfigProvider config = new ConfigProvider() {
+        @Override public boolean isPoolingEnabled() { return LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get(); }
+        @Override public boolean isTieredPoolingEnabled() { return LayeredTerrainConfig.ENABLE_TIERED_POOLING.get(); }
+        @Override public int getHotTierSize() { return LayeredTerrainConfig.POOL_HOT_TIER_SIZE.get(); }
+        @Override public int getWarmTierSize() { return LayeredTerrainConfig.POOL_WARM_TIER_SIZE.get(); }
+        @Override public int getColdTierSize() { return LayeredTerrainConfig.POOL_COLD_TIER_SIZE.get(); }
+        @Override public int getSimplePoolSize() { return LayeredTerrainConfig.MEMORY_POOL_SIZE.get(); }
+        @Override public int getCleanupIntervalSeconds() { return LayeredTerrainConfig.POOL_CLEANUP_INTERVAL_SECONDS.get(); }
+        @Override public boolean isDebugMode() { return LayeredTerrainConfig.DEBUG_MODE.get(); }
+    };
+
     // Three-tier pool: Hot (frequently used) -> Warm -> Cold (rarely used)
     private static final ConcurrentLinkedQueue<PooledHeightmap> hotTier = new ConcurrentLinkedQueue<>();
     private static final ConcurrentLinkedQueue<PooledHeightmap> warmTier = new ConcurrentLinkedQueue<>();
@@ -53,8 +76,8 @@ public class TieredMemoryPool {
     }
 
     public static void initialize() {
-        enabled = LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get();
-        tieredEnabled = LayeredTerrainConfig.ENABLE_TIERED_POOLING.get();
+        enabled = config.isPoolingEnabled();
+        tieredEnabled = config.isTieredPoolingEnabled();
 
         if (!enabled) {
             LayeredTerrainMod.LOGGER.info("Memory pooling disabled");
@@ -62,9 +85,9 @@ public class TieredMemoryPool {
         }
 
         if (tieredEnabled) {
-            maxHotTierSize = LayeredTerrainConfig.POOL_HOT_TIER_SIZE.get();
-            maxWarmTierSize = LayeredTerrainConfig.POOL_WARM_TIER_SIZE.get();
-            maxColdTierSize = LayeredTerrainConfig.POOL_COLD_TIER_SIZE.get();
+            maxHotTierSize = config.getHotTierSize();
+            maxWarmTierSize = config.getWarmTierSize();
+            maxColdTierSize = config.getColdTierSize();
 
             // Pre-allocate hot tier
             for (int i = 0; i < maxHotTierSize / 2; i++) {
@@ -77,7 +100,7 @@ public class TieredMemoryPool {
                 maxHotTierSize, maxWarmTierSize, maxColdTierSize
             );
         } else {
-            maxHotTierSize = LayeredTerrainConfig.MEMORY_POOL_SIZE.get();
+            maxHotTierSize = config.getSimplePoolSize();
             maxWarmTierSize = 0;
             maxColdTierSize = 0;
 
@@ -210,7 +233,7 @@ public class TieredMemoryPool {
      */
     private static void periodicCleanup() {
         long now = System.currentTimeMillis();
-        long interval = LayeredTerrainConfig.POOL_CLEANUP_INTERVAL_SECONDS.get() * 1000L;
+        long interval = config.getCleanupIntervalSeconds() * 1000L;
 
         if (now - lastCleanup < interval) {
             return;
@@ -235,7 +258,7 @@ public class TieredMemoryPool {
             }
         }
 
-        if (removed > 0 && LayeredTerrainConfig.DEBUG_MODE.get()) {
+        if (removed > 0 && config.isDebugMode()) {
             LayeredTerrainMod.LOGGER.debug(
                 "Cleaned up {} items from cold tier",
                 removed
@@ -276,7 +299,7 @@ public class TieredMemoryPool {
             }
         }
 
-        if (demoted > 0 && LayeredTerrainConfig.DEBUG_MODE.get()) {
+        if (demoted > 0 && config.isDebugMode()) {
             LayeredTerrainMod.LOGGER.debug(
                 "Demoted {} items from warm to cold tier",
                 demoted
@@ -290,8 +313,8 @@ public class TieredMemoryPool {
     public static void reconfigure() {
         LayeredTerrainMod.LOGGER.info("Reconfiguring memory pool...");
 
-        enabled = LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get();
-        tieredEnabled = LayeredTerrainConfig.ENABLE_TIERED_POOLING.get();
+        enabled = config.isPoolingEnabled();
+        tieredEnabled = config.isTieredPoolingEnabled();
 
         if (!enabled) {
             shutdown();
@@ -299,10 +322,10 @@ public class TieredMemoryPool {
         }
 
         maxHotTierSize = tieredEnabled
-            ? LayeredTerrainConfig.POOL_HOT_TIER_SIZE.get()
-            : LayeredTerrainConfig.MEMORY_POOL_SIZE.get();
-        maxWarmTierSize = tieredEnabled ? LayeredTerrainConfig.POOL_WARM_TIER_SIZE.get() : 0;
-        maxColdTierSize = tieredEnabled ? LayeredTerrainConfig.POOL_COLD_TIER_SIZE.get() : 0;
+            ? config.getHotTierSize()
+            : config.getSimplePoolSize();
+        maxWarmTierSize = tieredEnabled ? config.getWarmTierSize() : 0;
+        maxColdTierSize = tieredEnabled ? config.getColdTierSize() : 0;
 
         LayeredTerrainMod.LOGGER.info("Memory pool reconfigured");
     }
