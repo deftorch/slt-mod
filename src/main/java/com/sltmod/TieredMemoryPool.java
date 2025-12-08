@@ -5,9 +5,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Arrays;
 
+/**
+ * Manages memory pooling for heightmap arrays to reduce Garbage Collection pressure.
+ *
+ * <p>This class implements a tiered pooling strategy:
+ * <ul>
+ *   <li><b>Hot Tier:</b> For frequently accessed objects. Fast retrieval.</li>
+ *   <li><b>Warm Tier:</b> For moderately accessed objects.</li>
+ *   <li><b>Cold Tier:</b> For rarely accessed objects, eligible for cleanup.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Objects are promoted or demoted between tiers based on usage frequency.</p>
+ */
 public class TieredMemoryPool {
 
-    // Internal interface for testability
+    /**
+     * Interface for providing configuration values. Allows for easier testing by mocking config.
+     */
     interface ConfigProvider {
         boolean isPoolingEnabled();
         boolean isTieredPoolingEnabled();
@@ -75,6 +90,11 @@ public class TieredMemoryPool {
         }
     }
 
+    /**
+     * Initializes the memory pool based on current configuration.
+     *
+     * <p>Pre-allocates the hot tier to ensure immediate availability of resources.</p>
+     */
     public static void initialize() {
         enabled = config.isPoolingEnabled();
         tieredEnabled = config.isTieredPoolingEnabled();
@@ -117,7 +137,12 @@ public class TieredMemoryPool {
     }
 
     /**
-     * Acquire heightmap from pool
+     * Acquires a heightmap array (16x16) from the pool.
+     *
+     * <p>Attempts to retrieve from the Hot tier first, then Warm, then Cold.
+     * If all tiers are empty or pooling is disabled, a new array is allocated.</p>
+     *
+     * @return A 16x16 integer array, zeroed out if retrieved from pool.
      */
     public static int[][] acquire() {
         if (!enabled) {
@@ -181,7 +206,12 @@ public class TieredMemoryPool {
     }
 
     /**
-     * Release heightmap back to pool with intelligent tiering
+     * Releases a heightmap array back to the pool.
+     *
+     * <p>The array is placed into a tier based on its access history (Hot, Warm, or Cold).
+     * If the target tier is full, the object is discarded (letting GC handle it).</p>
+     *
+     * @param data The 16x16 array to release.
      */
     public static void release(int[][] data) {
         if (!enabled || data == null) {
@@ -348,16 +378,29 @@ public class TieredMemoryPool {
         );
     }
 
+    /**
+     * Data class holding memory pool statistics.
+     */
     public static class PoolStats {
+        /** Number of items in the hot tier. */
         public final int hotSize;
+        /** Number of items in the warm tier. */
         public final int warmSize;
+        /** Number of items in the cold tier. */
         public final int coldSize;
+        /** Total number of allocations requested. */
         public final long totalAllocations;
+        /** Number of hits in the hot tier. */
         public final long hotHits;
+        /** Number of hits in the warm tier. */
         public final long warmHits;
+        /** Number of hits in the cold tier. */
         public final long coldHits;
+        /** Number of times the pool was empty/disabled and new memory was allocated. */
         public final long misses;
+        /** Number of promotions to higher tiers. */
         public final long promotions;
+        /** Number of demotions to lower tiers. */
         public final long demotions;
 
         public PoolStats(int hot, int warm, int cold, long total,
@@ -375,19 +418,35 @@ public class TieredMemoryPool {
             this.demotions = demotions;
         }
 
+        /**
+         * Gets the total number of items across all tiers.
+         * @return Total pooled items.
+         */
         public int getTotalSize() {
             return hotSize + warmSize + coldSize;
         }
 
+        /**
+         * Gets the total number of successful cache hits.
+         * @return Total hits.
+         */
         public long getTotalHits() {
             return hotHits + warmHits + coldHits;
         }
 
+        /**
+         * Calculates the overall hit rate percentage.
+         * @return Hit rate (0-100).
+         */
         public double getHitRate() {
             long total = getTotalHits() + misses;
             return total > 0 ? (double) getTotalHits() / total * 100 : 0;
         }
 
+        /**
+         * Calculates the efficiency of the hot tier.
+         * @return Percentage of total hits that came from the hot tier.
+         */
         public double getHotTierEfficiency() {
             long total = getTotalHits();
             return total > 0 ? (double) hotHits / total * 100 : 0;

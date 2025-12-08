@@ -7,7 +7,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Comprehensive metrics tracking with percentile support
+ * System-wide metrics collection and reporting.
+ *
+ * <p>Tracks performance key performance indicators (KPIs) such as chunks processed per second,
+ * average processing time, and total blocks placed. Supports percentile tracking (P50, P95, P99)
+ * for detailed latency analysis.</p>
  */
 public class Metrics {
 
@@ -26,13 +30,21 @@ public class Metrics {
     private static long lastReport = System.currentTimeMillis();
     private static long initTime = System.currentTimeMillis();
 
+    /**
+     * Initializes the metrics system.
+     */
     public static void initialize() {
         initTime = System.currentTimeMillis();
         LayeredTerrainMod.LOGGER.debug("Metrics system initialized");
     }
 
     /**
-     * Record chunk processed with timing and blocks placed
+     * Records the completion of a chunk processing task.
+     *
+     * <p>Updates counters and, if enabled, adds the duration to the percentile tracking list.</p>
+     *
+     * @param durationNanos Time taken in nanoseconds.
+     * @param blocksPlaced Number of blocks modified.
      */
     public static void recordChunkProcessed(long durationNanos, int blocksPlaced) {
         chunksProcessed.incrementAndGet();
@@ -56,7 +68,7 @@ public class Metrics {
     }
 
     /**
-     * Record chunk skipped
+     * Records a skipped chunk (e.g. queue full).
      */
     public static void recordChunkSkipped() {
         chunksSkipped.incrementAndGet();
@@ -77,7 +89,9 @@ public class Metrics {
     }
 
     /**
-     * Print current metrics report
+     * Prints a formatted metrics report to the log.
+     *
+     * <p>Includes throughput, latency averages, and percentiles (if tracked).</p>
      */
     public static void printReport() {
         long processed = chunksProcessed.get();
@@ -190,7 +204,7 @@ public class Metrics {
     }
 
     /**
-     * Print final report on shutdown
+     * Prints a final comprehensive report, typically on server shutdown.
      */
     public static void printFinalReport() {
         LayeredTerrainMod.LOGGER.info("═══════════════════════════════════════════════════════");
@@ -206,12 +220,19 @@ public class Metrics {
         }
     }
 
+    /**
+     * Calculates the average processing time per chunk.
+     * @return Average time in milliseconds.
+     */
     public static double getAverageProcessingTime() {
         long processed = chunksProcessed.get();
         if (processed == 0) return 0;
         return (totalProcessingTime.sum() / 1_000_000.0) / processed;
     }
 
+    /**
+     * Resets all metrics counters and history.
+     */
     public static void reset() {
         chunksProcessed.set(0);
         chunksSkipped.set(0);

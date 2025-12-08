@@ -11,8 +11,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Advanced biome blending with adaptive radius and gradient detection
- * Provides smooth transitions between biomes with different terrain characteristics
+ * Handles the blending of terrain properties across biome boundaries.
+ *
+ * <p>This class calculates scale factors for terrain thickness by interpolating
+ * values from nearby biomes. It ensures smooth transitions between distinct areas,
+ * such as flat plains and steep mountains.</p>
+ *
+ * <p>Features include:</p>
+ * <ul>
+ *   <li>**Distance-weighted Blending**: Uses inverse square falloff for natural gradients.</li>
+ *   <li>**Adaptive Radius**: Automatically increases blend radius near extreme transitions
+ *       (e.g., ocean to mountain) if configured.</li>
+ *   <li>**Caching**: Caches biome scale factors to minimize tag lookup overhead.</li>
+ * </ul>
  */
 public class BiomeBlender {
 
@@ -24,12 +35,16 @@ public class BiomeBlender {
     private static final int MAX_BLEND_RADIUS = 4;
 
     /**
-     * Get blended scale factor with adaptive radius
+     * Calculates the blended scale factor for a specific block within a chunk.
      *
-     * @param chunk Current chunk
-     * @param localX Local X coordinate
-     * @param localZ Local Z coordinate
-     * @return Blended scale factor for thickness calculation
+     * <p>This method samples the biomes in a neighborhood around the target position
+     * and computes a weighted average of their scale factors. The size of the
+     * neighborhood (radius) can adapt dynamically based on terrain complexity.</p>
+     *
+     * @param chunk The chunk containing the block.
+     * @param localX The local X coordinate (0-15).
+     * @param localZ The local Z coordinate (0-15).
+     * @return The blended scale factor to apply to the terrain thickness.
      */
     public static float getBlendedScaleFactor(LevelChunk chunk, int localX, int localZ) {
         if (chunk == null) {
@@ -48,8 +63,8 @@ public class BiomeBlender {
     }
 
     /**
-     * Determine optimal blend radius based on nearby biome transitions
-     * Uses gradient analysis to detect sharp biome boundaries
+     * Determine optimal blend radius based on nearby biome transitions.
+     * Uses gradient analysis to detect sharp biome boundaries.
      */
     private static int determineBlendRadius(LevelChunk chunk, int localX, int localZ,
                                            int worldX, int worldZ) {
@@ -84,8 +99,8 @@ public class BiomeBlender {
     }
 
     /**
-     * Check if there's an extreme biome transition nearby
-     * "Extreme" means large difference in scale factors (e.g., ocean to mountain)
+     * Check if there's an extreme biome transition nearby.
+     * "Extreme" means large difference in scale factors (e.g., ocean to mountain).
      */
     private static boolean hasExtremeBiomeTransition(LevelChunk chunk, int worldX, int worldZ) {
         BlockPos centerPos = new BlockPos(worldX, 64, worldZ);
@@ -112,7 +127,7 @@ public class BiomeBlender {
     }
 
     /**
-     * Detect if position is near a biome boundary using gradient analysis
+     * Detect if position is near a biome boundary using gradient analysis.
      */
     private static boolean isNearBiomeBoundary(LevelChunk chunk, int worldX, int worldZ) {
         BlockPos centerPos = new BlockPos(worldX, 64, worldZ);
@@ -139,7 +154,7 @@ public class BiomeBlender {
     }
 
     /**
-     * Blend scale factors with specified radius using distance-weighted average
+     * Blend scale factors with specified radius using distance-weighted average.
      */
     private static float blendWithRadius(LevelChunk chunk, int worldX, int worldZ, int radius) {
         float totalFactor = 0.0f;
@@ -184,7 +199,7 @@ public class BiomeBlender {
     }
 
     /**
-     * Get scale factor for specific biome with caching
+     * Get scale factor for specific biome with caching.
      */
     private static float getBiomeScaleFactor(Holder<Biome> biomeHolder) {
         Biome biome = biomeHolder.value();
@@ -225,7 +240,10 @@ public class BiomeBlender {
     }
 
     /**
-     * Clear biome cache (call on config reload)
+     * Clears the biome scale factor cache.
+     *
+     * <p>This should be called when the configuration is reloaded, as scale factors
+     * for biomes may have changed.</p>
      */
     public static void clearCache() {
         scaleFactorCache.clear();
@@ -233,7 +251,9 @@ public class BiomeBlender {
     }
 
     /**
-     * Get cache statistics
+     * Returns the number of cached biome scale factors.
+     *
+     * @return The size of the internal cache.
      */
     public static int getCacheSize() {
         return scaleFactorCache.size();

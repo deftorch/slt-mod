@@ -5,8 +5,26 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.Arrays;
 
+/**
+ * Implements the Circuit Breaker pattern to improve system resilience.
+ *
+ * <p>This component monitors the success and failure rates of terrain processing tasks.
+ * If failures exceed a threshold, the circuit "opens," stopping further processing
+ * to prevent cascading failures and allowing the system to recover.</p>
+ *
+ * <p>States:
+ * <ul>
+ *   <li><b>CLOSED:</b> Normal operation. Failures are tracked.</li>
+ *   <li><b>OPEN:</b> Processing blocked. Enters HALF_OPEN after a reset timeout.</li>
+ *   <li><b>HALF_OPEN:</b> Allows a limited number of "test" requests to check stability.</li>
+ * </ul>
+ * </p>
+ */
 public class CircuitBreakerAdvanced {
 
+    /**
+     * Enum representing the possible states of the circuit breaker.
+     */
     public enum State {
         CLOSED,    // Normal operation
         OPEN,      // Failing - reject all requests
@@ -30,6 +48,9 @@ public class CircuitBreakerAdvanced {
     private static final AtomicInteger windowIndex = new AtomicInteger(0);
     private static final Object windowLock = new Object();
 
+    /**
+     * Initializes the circuit breaker state and counters.
+     */
     public static void initialize() {
         currentState.set(State.CLOSED);
         consecutiveFailures.set(0);
@@ -43,7 +64,12 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Check if processing should be allowed
+     * Checks if a new processing task should be allowed.
+     *
+     * <p>If the circuit is CLOSED, it returns true. If OPEN, it checks if the reset timeout
+     * has passed to transition to HALF_OPEN. If HALF_OPEN, it limits the number of concurrent attempts.</p>
+     *
+     * @return True if processing is allowed, false otherwise.
      */
     public static boolean shouldProcess() {
         if (!LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()) {
@@ -101,7 +127,10 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Record a failure
+     * Records a failure event.
+     *
+     * <p>Increments failure counters and updates the rolling error rate window.
+     * If thresholds are exceeded, the circuit trips to the OPEN state.</p>
      */
     public static void recordFailure() {
         if (!LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()) {
@@ -183,7 +212,10 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Record a success
+     * Records a success event.
+     *
+     * <p>Resets consecutive failure counters. If in HALF_OPEN state, successful attempts
+     * contribute towards closing the circuit again.</p>
      */
     public static void recordSuccess() {
         if (!LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()) {
@@ -261,21 +293,24 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Check if circuit is currently open
+     * Checks if the circuit is currently open (blocking requests).
+     * @return True if state is OPEN.
      */
     public static boolean isOpen() {
         return currentState.get() == State.OPEN;
     }
 
     /**
-     * Get current state
+     * Gets the current state of the circuit breaker.
+     * @return The current {@link State}.
      */
     public static State getState() {
         return currentState.get();
     }
 
     /**
-     * Get detailed statistics
+     * Returns a detailed string representation of the circuit breaker's status.
+     * @return Formatted status string.
      */
     public static String getStats() {
         State state = currentState.get();
@@ -296,7 +331,7 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Print detailed statistics
+     * Prints detailed statistics to the log.
      */
     public static void printStats() {
         if (!LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()) {
@@ -345,7 +380,9 @@ public class CircuitBreakerAdvanced {
     }
 
     /**
-     * Force reset (admin command)
+     * Forces the circuit breaker to reset to the CLOSED state.
+     *
+     * <p>Intended for manual administrative intervention.</p>
      */
     public static void forceReset() {
         currentState.set(State.CLOSED);

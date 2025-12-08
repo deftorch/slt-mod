@@ -10,8 +10,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 /**
- * Comprehensive edge case filtering system
- * Determines which positions should NOT receive layered blocks
+ * Comprehensive filter for detecting edge cases where layering should be skipped.
+ *
+ * <p>This class evaluates a block position against numerous criteria (structures, water proximity,
+ * overhangs, etc.) to decide if terrain smoothing should be applied. This prevents visual artifacts
+ * and preserves important features like farms and paths.</p>
  */
 public class EdgeCaseFilter {
 
@@ -29,15 +32,15 @@ public class EdgeCaseFilter {
     private static final AtomicLong otherSkips = new AtomicLong(0);
 
     /**
-     * Master filter - checks all enabled filters
+     * Master filter - checks all enabled filters.
      *
-     * @param chunk Current chunk
-     * @param pos Surface block position
-     * @param surfaceState Surface block state
-     * @param cache Heightmap cache
-     * @param localX Local X coordinate
-     * @param localZ Local Z coordinate
-     * @return true if layers should be placed, false if should skip
+     * @param chunk Current chunk.
+     * @param pos Surface block position.
+     * @param surfaceState Surface block state.
+     * @param cache Heightmap cache.
+     * @param localX Local X coordinate.
+     * @param localZ Local Z coordinate.
+     * @return true if layers should be placed, false if should skip.
      */
     public static boolean shouldPlaceLayer(
         LevelChunk chunk,
@@ -314,6 +317,9 @@ public class EdgeCaseFilter {
         return new FilterStats(total, structures, water, caves, overhangs, other, skipRate);
     }
 
+    /**
+     * Data class for filter statistics.
+     */
     public static class FilterStats {
         public final long totalChecks;
         public final long structureSkips;
@@ -334,6 +340,10 @@ public class EdgeCaseFilter {
             this.skipRate = rate;
         }
 
+        /**
+         * Gets the total number of skipped positions.
+         * @return Total skips.
+         */
         public long getTotalSkips() {
             return structureSkips + waterSkips + caveSkips + overhangSkips + otherSkips;
         }

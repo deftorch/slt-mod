@@ -3,6 +3,13 @@ package com.sltmod;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Performs health checks and diagnostics on the system.
+ *
+ * <p>Monitors critical resources like memory, CPU, and thread pools. Can run startup checks
+ * and periodic health checks to warn administrators of potential issues (e.g. queue saturation,
+ * memory leaks).</p>
+ */
 public class SystemDiagnostics {
 
     private static long lastHealthCheck = 0;
@@ -27,7 +34,10 @@ public class SystemDiagnostics {
     }
 
     /**
-     * Run startup diagnostics
+     * Run startup diagnostics.
+     *
+     * <p>Checks JVM environment, configuration validity, and optional feature availability
+     * before the system starts fully.</p>
      */
     public static void runStartupCheck() {
         LayeredTerrainMod.LOGGER.info("Running startup diagnostics...");
@@ -51,7 +61,11 @@ public class SystemDiagnostics {
     }
 
     /**
-     * Run periodic health check
+     * Run periodic health check.
+     *
+     * <p>Called periodically (configured by {@code HEALTH_CHECK_INTERVAL_SECONDS}) to
+     * monitor runtime health. Checks include queue size, memory pool hit rate, circuit breaker
+     * status, and thread load imbalance.</p>
      */
     public static void runHealthCheck() {
         if (!LayeredTerrainConfig.ENABLE_HEALTH_CHECKS.get()) {

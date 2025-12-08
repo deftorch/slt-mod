@@ -12,7 +12,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Comprehensive chunk validation before processing
+ * Validates chunks to determine if they are suitable for terrain processing.
+ *
+ * <p>Performs checks against blacklists (dimensions, biomes) and ensures chunks
+ * are loaded and non-empty. This prevents processing on invalid or unwanted terrain.</p>
  */
 public class ChunkValidator {
 
@@ -74,10 +77,19 @@ public class ChunkValidator {
     }
 
     /**
-     * Validate chunk for processing
+     * Determines if a chunk is valid for processing.
      *
-     * @param chunk Chunk to validate
-     * @return true if valid, false if should skip
+     * <p>Runs a series of checks:
+     * <ol>
+     *   <li>Null/Empty check.</li>
+     *   <li>Dimension blacklist check.</li>
+     *   <li>Biome blacklist check.</li>
+     *   <li>Custom validation hooks.</li>
+     * </ol>
+     * </p>
+     *
+     * @param chunk The chunk to validate.
+     * @return True if the chunk should be processed, false otherwise.
      */
     public static boolean isValidForProcessing(LevelChunk chunk) {
         totalValidations.incrementAndGet();
@@ -188,7 +200,8 @@ public class ChunkValidator {
     }
 
     /**
-     * Get validation statistics
+     * Retrieves statistics about validation outcomes.
+     * @return A {@link ValidationStats} object.
      */
     public static ValidationStats getStats() {
         long total = totalValidations.get();
@@ -206,6 +219,9 @@ public class ChunkValidator {
         );
     }
 
+    /**
+     * Data class for validation statistics.
+     */
     public static class ValidationStats {
         public final long totalValidations;
         public final long dimensionRejects;
@@ -223,13 +239,19 @@ public class ChunkValidator {
             this.rejectRate = rate;
         }
 
+        /**
+         * Gets the total number of rejected chunks.
+         * @return Total rejections.
+         */
         public long getTotalRejects() {
             return dimensionRejects + biomeRejects + emptyChunkRejects + otherRejects;
         }
     }
 
     /**
-     * Reload blacklists (for hot-reload)
+     * Reloads blacklist configurations.
+     *
+     * <p>Called when the configuration file is hot-reloaded.</p>
      */
     public static void reloadBlacklists() {
         BLACKLISTED_DIMENSIONS.clear();

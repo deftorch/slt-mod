@@ -3,8 +3,14 @@ package com.sltmod;
 import net.minecraft.util.Mth;
 
 /**
- * Advanced slope calculator with validation and multiple sampling grids
- * Thread-safe and NaN/Infinity protected
+ * Advanced slope calculator that provides methods for analyzing terrain geometry.
+ *
+ * <p>This class implements various algorithms to calculate slopes and gradients from
+ * heightmap data. It supports configurable grid sizes (3x3, 5x5, 7x7) to trade off
+ * performance for accuracy.</p>
+ *
+ * <p>It is designed to be thread-safe and robust against NaN/Infinity values, ensuring
+ * stability during terrain generation.</p>
  */
 public class SlopeCalculator {
 
@@ -15,12 +21,17 @@ public class SlopeCalculator {
     private static final double MAX_DAMPING = 1000.0;
 
     /**
-     * Calculate local slope at position using configured grid size
+     * Calculates the local slope at a specific position using the configured grid size.
      *
-     * @param cache Heightmap cache
-     * @param x Local X coordinate
-     * @param z Local Z coordinate
-     * @return Raw slope value (max height difference in neighborhood)
+     * <p>The slope is defined as the difference between the maximum and minimum height
+     * within the neighborhood. The neighborhood size is determined by the
+     * {@link HeightmapCache#getGridSize()}.</p>
+     *
+     * @param cache The heightmap cache containing terrain data.
+     * @param x The local X coordinate (0-15).
+     * @param z The local Z coordinate (0-15).
+     * @return The raw slope value (height difference).
+     * @throws IllegalArgumentException if the cache is null.
      */
     public static int calculateLocalSlope(HeightmapCache cache, int x, int z) {
         // Validate inputs
@@ -105,8 +116,9 @@ public class SlopeCalculator {
     }
 
     /**
-     * Apply exponential damping to raw slope
-     * Formula: dampedSlope = rawSlope / (1 + rawSlope / dampingFactor)
+     * Apply exponential damping to raw slope.
+     *
+     * <p>Formula: {@code dampedSlope = rawSlope / (1 + rawSlope / dampingFactor)}</p>
      *
      * @param rawSlope Raw slope value
      * @return Damped slope value (0.0 to infinity, typically 0-20)
@@ -144,10 +156,11 @@ public class SlopeCalculator {
     }
 
     /**
-     * Calculate slopes for entire chunk
+     * Calculates slopes for the entire 16x16 chunk.
      *
-     * @param cache Heightmap cache
-     * @return 16×16 array of raw slope values
+     * @param cache The heightmap cache for the chunk.
+     * @return A 16x16 2D array containing raw slope values for each block.
+     * @throws IllegalArgumentException if the cache is null.
      */
     public static int[][] calculateAllSlopes(HeightmapCache cache) {
         if (cache == null) {
@@ -166,10 +179,11 @@ public class SlopeCalculator {
     }
 
     /**
-     * Normalize all slopes using damping function
+     * Normalizes a grid of raw slopes using the damping function.
      *
-     * @param rawSlopes Raw slope values
-     * @return 16×16 array of normalized slopes
+     * @param rawSlopes A 16x16 array of raw slope values.
+     * @return A 16x16 array of normalized (damped) slope values.
+     * @throws IllegalArgumentException if the input array is invalid.
      */
     public static float[][] normalizeSlopes(int[][] rawSlopes) {
         if (rawSlopes == null || rawSlopes.length != 16) {
@@ -192,11 +206,14 @@ public class SlopeCalculator {
     }
 
     /**
-     * Calculate gradient information for anisotropic smoothing
-     * Uses Sobel operator for edge detection
+     * Calculates gradient information for the entire chunk using the Sobel operator.
      *
-     * @param heightMap Raw heightmap data
-     * @return 16×16 array of gradient information
+     * <p>Gradients provide direction and magnitude of the slope, which is useful for
+     * anisotropic smoothing algorithms that preserve ridges.</p>
+     *
+     * @param heightMap The 16x16 heightmap array.
+     * @return A 16x16 array of {@link GradientInfo} objects.
+     * @throws IllegalArgumentException if the heightmap is invalid.
      */
     public static GradientInfo[][] calculateGradients(int[][] heightMap) {
         if (heightMap == null || heightMap.length != 16) {
@@ -250,13 +267,23 @@ public class SlopeCalculator {
     }
 
     /**
-     * Gradient information for anisotropic smoothing
+     * Value object holding gradient direction and magnitude.
      */
     public static class GradientInfo {
-        public final float directionX; // Normalized gradient direction X
-        public final float directionZ; // Normalized gradient direction Z
-        public final float magnitude;  // Gradient strength
+        /** The normalized X component of the gradient direction. */
+        public final float directionX;
+        /** The normalized Z component of the gradient direction. */
+        public final float directionZ;
+        /** The magnitude (strength) of the gradient. */
+        public final float magnitude;
 
+        /**
+         * Constructs a new GradientInfo object.
+         *
+         * @param dx The normalized X direction.
+         * @param dz The normalized Z direction.
+         * @param mag The magnitude of the gradient.
+         */
         public GradientInfo(float dx, float dz, float mag) {
             this.directionX = dx;
             this.directionZ = dz;
@@ -264,7 +291,10 @@ public class SlopeCalculator {
         }
 
         /**
-         * Check if this is a ridge/edge (high magnitude)
+         * Checks if the gradient magnitude exceeds a threshold, indicating an edge or ridge.
+         *
+         * @param threshold The magnitude threshold.
+         * @return True if magnitude is greater than threshold, false otherwise.
          */
         public boolean isEdge(float threshold) {
             return magnitude > threshold;

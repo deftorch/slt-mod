@@ -7,8 +7,18 @@ import java.util.concurrent.*;
 import net.minecraft.util.Mth;
 
 /**
- * Advanced multi-algorithm smoother with parallel processing support
- * Supports 6 smoothing algorithms and optional GPU acceleration
+ * Advanced multi-algorithm smoother with parallel processing support.
+ *
+ * <p>This class implements various terrain smoothing algorithms, including Gaussian, Bilateral,
+ * Anisotropic, and Median filters. It allows for customizable smoothing passes and strength.</p>
+ *
+ * <p>Features include:</p>
+ * <ul>
+ *   <li>**Parallel Processing**: Optionally utilizes a thread pool for heavy smoothing operations.</li>
+ *   <li>**GPU Acceleration**: Hooks into {@link GPUAccelerator} if available and enabled.</li>
+ *   <li>**Adaptive Algorithms**: Can switch algorithms based on local terrain variance.</li>
+ *   <li>**Differential Clamping**: Ensures height differences between neighbors do not exceed limits.</li>
+ * </ul>
  */
 public class Smoother {
 
@@ -23,7 +33,10 @@ public class Smoother {
     private static final int MAX_CLAMPING_ITERATIONS = 5;
 
     /**
-     * Initialize smoothing thread pool
+     * Initializes the smoothing thread pool if multi-threaded smoothing is enabled.
+     *
+     * <p>This method creates a fixed thread pool with a configured number of threads
+     * (defaulting to CPU cores / 4) to handle parallel smoothing tasks.</p>
      */
     public static void initialize() {
         if (!LayeredTerrainConfig.ENABLE_MULTI_THREADED_SMOOTHING.get()) {
@@ -54,12 +67,16 @@ public class Smoother {
     }
 
     /**
-     * Apply smoothing based on configured algorithm
+     * Applies the configured smoothing algorithm to a thickness map.
      *
-     * @param input Input thickness array
-     * @param passes Number of smoothing passes
-     * @param cache Heightmap cache (for gradient calculation)
-     * @return Smoothed thickness array
+     * <p>This is the main entry point for smoothing. It selects the algorithm based on configuration
+     * (e.g., Gaussian, Bilateral) and attempts to use GPU acceleration if available.</p>
+     *
+     * @param input The 16x16 input thickness array.
+     * @param passes The number of smoothing passes to apply (1-5).
+     * @param cache The heightmap cache, required for algorithms like Anisotropic smoothing.
+     * @return A new 16x16 array containing the smoothed thickness values.
+     * @throws IllegalArgumentException if the input array is invalid.
      */
     public static int[][] smoothThickness(int[][] input, int passes, HeightmapCache cache) {
         // Validate inputs
@@ -495,7 +512,15 @@ public class Smoother {
     }
 
     /**
-     * Differential clamping - ensures smooth transitions
+     * Enforces maximum height differentials between adjacent blocks.
+     *
+     * <p>Iteratively adjusts values so that no two adjacent blocks have a difference
+     * greater than {@code maxDiff}. This ensures the terrain is navigable and looks natural.</p>
+     *
+     * @param input The 16x16 thickness array.
+     * @param maxDiff The maximum allowed difference between neighbors (1-4).
+     * @return A new 16x16 array with clamped values.
+     * @throws IllegalArgumentException if the input is invalid.
      */
     public static int[][] clampDifferentials(int[][] input, int maxDiff) {
         // Validate inputs
@@ -583,7 +608,7 @@ public class Smoother {
     }
 
     /**
-     * Shutdown smoothing pool
+     * Shuts down the smoothing thread pool and releases resources.
      */
     public static void shutdown() {
         synchronized (poolLock) {

@@ -1,12 +1,15 @@
 package com.sltmod;
 
 /**
- * Comprehensive performance benchmark
+ * Utility for running performance benchmarks on the terrain generation system.
+ *
+ * <p>Executes a suite of tests covering memory allocation, slope calculation,
+ * and smoothing algorithms to measure throughput and latency.</p>
  */
 public class PerformanceBenchmark {
 
     /**
-     * Run full benchmark suite
+     * Run full benchmark suite.
      */
     public static void runBenchmark() {
         LayeredTerrainMod.LOGGER.info("╔════════════════════════════════════════════════════╗");
