@@ -67,9 +67,8 @@ public class LayeredTerrainMod {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(LayeredTerrainSystem.class);
 
-        LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  Layered Terrain System v{} Initializing...    ║", Reference.VERSION);
-        LOGGER.info("╚════════════════════════════════════════════════════╝");
+        // Defer detailed logging to commonSetup where config is available
+        LOGGER.info("Layered Terrain System v{} initializing...", Reference.VERSION);
     }
 
     /**
@@ -107,29 +106,33 @@ public class LayeredTerrainMod {
 
                 long initTime = System.currentTimeMillis() - initStartTime;
 
-                LOGGER.info("╔════════════════════════════════════════════════════╗");
-                LOGGER.info("║  INITIALIZATION COMPLETE                           ║");
-                LOGGER.info("╠════════════════════════════════════════════════════╣");
-                LOGGER.info("║  ✅ Layer Registry                                 ║");
-                LOGGER.info("║  ✅ Tiered Memory Pool                             ║");
-                LOGGER.info("║  ✅ Advanced Circuit Breaker                       ║");
-                LOGGER.info("║  ✅ Metrics & Profiling                            ║");
-                LOGGER.info("║  ✅ Async Processor                                ║");
-                LOGGER.info("║  ✅ Load Balancer                                  ║");
+                if (!LayeredTerrainConfig.QUIET_STARTUP.get()) {
+                    LOGGER.info("╔════════════════════════════════════════════════════╗");
+                    LOGGER.info("║  INITIALIZATION COMPLETE                           ║");
+                    LOGGER.info("╠════════════════════════════════════════════════════╣");
+                    LOGGER.info("║  ✅ Layer Registry                                 ║");
+                    LOGGER.info("║  ✅ Tiered Memory Pool                             ║");
+                    LOGGER.info("║  ✅ Advanced Circuit Breaker                       ║");
+                    LOGGER.info("║  ✅ Metrics & Profiling                            ║");
+                    LOGGER.info("║  ✅ Async Processor                                ║");
+                    LOGGER.info("║  ✅ Load Balancer                                  ║");
 
-                if (LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get()) {
-                    LOGGER.info("║  ✅ GPU Acceleration                               ║");
-                }
-                if (LayeredTerrainConfig.ENABLE_ML_PREDICTION.get()) {
-                    LOGGER.info("║  ✅ ML Prediction Engine                           ║");
-                }
-                if (LayeredTerrainConfig.ENABLE_PROMETHEUS.get()) {
-                    LOGGER.info("║  ✅ Prometheus Metrics                             ║");
-                }
+                    if (LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get()) {
+                        LOGGER.info("║  ✅ GPU Acceleration                               ║");
+                    }
+                    if (LayeredTerrainConfig.ENABLE_ML_PREDICTION.get()) {
+                        LOGGER.info("║  ✅ ML Prediction Engine                           ║");
+                    }
+                    if (LayeredTerrainConfig.ENABLE_PROMETHEUS.get()) {
+                        LOGGER.info("║  ✅ Prometheus Metrics                             ║");
+                    }
 
-                LOGGER.info("╠════════════════════════════════════════════════════╣");
-                LOGGER.info("║  Initialization Time: {}ms                      ║", initTime);
-                LOGGER.info("╚════════════════════════════════════════════════════╝");
+                    LOGGER.info("╠════════════════════════════════════════════════════╣");
+                    LOGGER.info("║  Initialization Time: {}ms                      ║", initTime);
+                    LOGGER.info("╚════════════════════════════════════════════════════╝");
+                } else {
+                    LOGGER.info("Layered Terrain System initialized in {}ms.", initTime);
+                }
 
             } catch (Exception e) {
                 LOGGER.error("❌ CRITICAL: Initialization failed!", e);
@@ -147,44 +150,48 @@ public class LayeredTerrainMod {
      */
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
-        LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  LAYERED TERRAIN SYSTEM v{} STARTED            ║", Reference.VERSION);
-        LOGGER.info("╠════════════════════════════════════════════════════╣");
-        LOGGER.info("║  Edition: ULTIMATE HYBRID                          ║");
-        LOGGER.info("╠════════════════════════════════════════════════════╣");
-        LOGGER.info("║  CONFIGURATION:                                    ║");
-        LOGGER.info("║  • Enabled: {}                                   ║",
-            formatBoolean(LayeredTerrainConfig.ENABLED.get()));
-        LOGGER.info("║  • Async Processing: {}                          ║",
-            formatBoolean(LayeredTerrainConfig.ASYNC_PROCESSING.get()));
-        LOGGER.info("║  • Smoothing Algorithm: {:>20}         ║",
-            LayeredTerrainConfig.SMOOTHING_TYPE.get());
-        LOGGER.info("║  • Smoothing Passes: {:>2}                          ║",
-            LayeredTerrainConfig.SMOOTHING_PASSES.get());
-        LOGGER.info("║  • Worker Threads: {:>2}                            ║",
-            getActualThreadCount());
-        LOGGER.info("╠════════════════════════════════════════════════════╣");
-        LOGGER.info("║  FEATURES:                                         ║");
-        LOGGER.info("║  • Memory Pooling: {}                            ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get()));
-        LOGGER.info("║  • Hot-Reload: {}                                ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_HOT_RELOAD.get()));
-        LOGGER.info("║  • Circuit Breaker: {}                           ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()));
-        LOGGER.info("║  • Load Balancing: {}                            ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get()));
-        LOGGER.info("║  • Adaptive Biome Blending: {}                   ║",
-            formatBoolean(LayeredTerrainConfig.ADAPTIVE_BIOME_BLENDING.get()));
-        LOGGER.info("║  • GPU Acceleration: {}                          ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get()));
-        LOGGER.info("║  • ML Prediction: {}                             ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_ML_PREDICTION.get()));
-        LOGGER.info("║  • Prometheus Metrics: {}                        ║",
-            formatBoolean(LayeredTerrainConfig.ENABLE_PROMETHEUS.get()));
-        LOGGER.info("╠════════════════════════════════════════════════════╣");
-        LOGGER.info("║  OPTIMIZATION LEVEL: {}                         ║",
-            getOptimizationLevel());
-        LOGGER.info("╚════════════════════════════════════════════════════╝");
+        if (!LayeredTerrainConfig.QUIET_STARTUP.get()) {
+            LOGGER.info("╔════════════════════════════════════════════════════╗");
+            LOGGER.info("║  LAYERED TERRAIN SYSTEM v{} STARTED            ║", Reference.VERSION);
+            LOGGER.info("╠════════════════════════════════════════════════════╣");
+            LOGGER.info("║  Edition: ULTIMATE HYBRID                          ║");
+            LOGGER.info("╠════════════════════════════════════════════════════╣");
+            LOGGER.info("║  CONFIGURATION:                                    ║");
+            LOGGER.info("║  • Enabled: {}                                   ║",
+                formatBoolean(LayeredTerrainConfig.ENABLED.get()));
+            LOGGER.info("║  • Async Processing: {}                          ║",
+                formatBoolean(LayeredTerrainConfig.ASYNC_PROCESSING.get()));
+            LOGGER.info("║  • Smoothing Algorithm: {:>20}         ║",
+                LayeredTerrainConfig.SMOOTHING_TYPE.get());
+            LOGGER.info("║  • Smoothing Passes: {:>2}                          ║",
+                LayeredTerrainConfig.SMOOTHING_PASSES.get());
+            LOGGER.info("║  • Worker Threads: {:>2}                            ║",
+                getActualThreadCount());
+            LOGGER.info("╠════════════════════════════════════════════════════╣");
+            LOGGER.info("║  FEATURES:                                         ║");
+            LOGGER.info("║  • Memory Pooling: {}                            ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get()));
+            LOGGER.info("║  • Hot-Reload: {}                                ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_HOT_RELOAD.get()));
+            LOGGER.info("║  • Circuit Breaker: {}                           ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_CIRCUIT_BREAKER.get()));
+            LOGGER.info("║  • Load Balancing: {}                            ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get()));
+            LOGGER.info("║  • Adaptive Biome Blending: {}                   ║",
+                formatBoolean(LayeredTerrainConfig.ADAPTIVE_BIOME_BLENDING.get()));
+            LOGGER.info("║  • GPU Acceleration: {}                          ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get()));
+            LOGGER.info("║  • ML Prediction: {}                             ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_ML_PREDICTION.get()));
+            LOGGER.info("║  • Prometheus Metrics: {}                        ║",
+                formatBoolean(LayeredTerrainConfig.ENABLE_PROMETHEUS.get()));
+            LOGGER.info("╠════════════════════════════════════════════════════╣");
+            LOGGER.info("║  OPTIMIZATION LEVEL: {}                         ║",
+                getOptimizationLevel());
+            LOGGER.info("╚════════════════════════════════════════════════════╝");
+        } else {
+            LOGGER.info("Layered Terrain System v{} started.", Reference.VERSION);
+        }
 
         // Perform self-diagnostics
         SystemDiagnostics.runStartupCheck();
@@ -200,9 +207,13 @@ public class LayeredTerrainMod {
      */
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
-        LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  Shutting down Layered Terrain System v{}...   ║", Reference.VERSION);
-        LOGGER.info("╚════════════════════════════════════════════════════╝");
+        if (!LayeredTerrainConfig.QUIET_STARTUP.get()) {
+            LOGGER.info("╔════════════════════════════════════════════════════╗");
+            LOGGER.info("║  Shutting down Layered Terrain System v{}...   ║", Reference.VERSION);
+            LOGGER.info("╚════════════════════════════════════════════════════╝");
+        } else {
+            LOGGER.info("Shutting down Layered Terrain System v{}...", Reference.VERSION);
+        }
 
         try {
             // Graceful shutdown in reverse dependency order
