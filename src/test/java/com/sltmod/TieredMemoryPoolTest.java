@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.sltmod.memory.TieredMemoryPool;
+
 /**
  * Unit tests for the {@link TieredMemoryPool} class.
  *

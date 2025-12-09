@@ -8,6 +8,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.sltmod.memory.HeightmapCache;
+import com.sltmod.processing.SlopeCalculator;
+
 /**
  * Unit tests for the {@link SlopeCalculator} class.
  *
