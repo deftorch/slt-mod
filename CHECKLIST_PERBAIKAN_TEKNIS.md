@@ -37,24 +37,24 @@
 ## ✅ Prioritas 3: Peningkatan (Timeline: 1-4 minggu)
 **Kriteria:** DX, Dokumentasi, Polish.
 
-- [ ] **[DX]** Kurangi verbositas logging startup
+- [x] **[DX]** Kurangi verbositas logging startup
     - *Mengapa:* Log server terlalu penuh dengan ASCII art. Buat opsi config `quiet_startup`.
-- [ ] **[DOCS]** Generate Javadoc HTML
+- [x] **[DOCS]** Generate Javadoc HTML
     - *Mengapa:* Memudahkan akses dokumentasi API offline.
-- [ ] **[PERF]** Benchmark Profiling
+- [x] **[PERF]** Benchmark Profiling
     - *Mengapa:* Verifikasi klaim <5ms dengan data riil menggunakan JMH (Java Microbenchmark Harness).
-- [ ] **[CI]** Setup GitHub Actions untuk Auto-Build & Test
+- [x] **[CI]** Setup GitHub Actions untuk Auto-Build & Test
     - *Mengapa:* Otomatisasi validasi setiap PR.
 
 **Definition of Done untuk Priority 3:**
-- [ ] Startup log lebih bersih.
-- [ ] JMH Benchmark report tersedia.
-- [ ] CI pipeline aktif (jika repo di-host).
+- [x] Startup log lebih bersih.
+- [x] JMH Benchmark report tersedia.
+- [x] CI pipeline aktif (jika repo di-host).
 
 ## Progress Tracking
 - **Priority 1:** ⬜ 0/3 completed (Target: TBD)
 - **Priority 2:** ⬜ 0/4 completed (Target: TBD)
-- **Priority 3:** ⬜ 0/4 completed (Target: TBD)
+- **Priority 3:** ✅ 4/4 completed (Target: TBD)
 
 ## Notes & Dependencies
 - [ ] **Dependencies:** Membutuhkan akses ke repositori git untuk refactoring struktur paket.

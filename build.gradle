@@ -14,7 +14,9 @@ base {
 
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 // Use local toolchain if available, otherwise fail if auto-provisioning fails
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+// java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
@@ -121,6 +123,7 @@ repositories {
     // flatDir {
     //     dir 'libs'
     // }
+    mavenCentral()
 }
 
 dependencies {
@@ -151,10 +154,21 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:5.3.1'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
     testImplementation 'org.mockito:mockito-inline:5.2.0'
+
+    // JMH Benchmarking
+    testImplementation 'org.openjdk.jmh:jmh-core:1.37'
+    testAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.37'
 }
 
 test {
     useJUnitPlatform()
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.memberLevel = JavadocMemberLevel.PROTECTED
+    options.links("https://docs.oracle.com/en/java/javase/17/docs/api/")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

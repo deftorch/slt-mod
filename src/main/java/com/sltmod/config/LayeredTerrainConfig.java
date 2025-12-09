@@ -38,6 +38,7 @@ public class LayeredTerrainConfig {
     public static final ForgeConfigSpec.BooleanValue USE_5X5_SAMPLING;
     public static final ForgeConfigSpec.BooleanValue USE_7X7_SAMPLING;
     public static final ForgeConfigSpec.BooleanValue DEBUG_MODE;
+    public static final ForgeConfigSpec.BooleanValue QUIET_STARTUP;
 
     // ==================== SMOOTHING ====================
     public static final ForgeConfigSpec.EnumValue<SmoothingType> SMOOTHING_TYPE;
@@ -248,6 +249,14 @@ public class LayeredTerrainConfig {
                 "WARNING: Significant performance impact"
             )
             .define("debug_mode", false);
+
+        QUIET_STARTUP = BUILDER
+            .comment(
+                "Reduce startup logging verbosity",
+                "Disables ASCII art and detailed initialization logs",
+                "Useful for modpacks or servers with strict logging policies"
+            )
+            .define("quiet_startup", false);
 
         BUILDER.pop();
 
