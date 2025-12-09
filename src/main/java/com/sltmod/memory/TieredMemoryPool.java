@@ -23,6 +23,8 @@ import com.sltmod.config.LayeredTerrainConfig;
  */
 public class TieredMemoryPool {
 
+    private static final TieredMemoryPool INSTANCE = new TieredMemoryPool();
+
     /**
      * Interface for providing configuration values. Allows for easier testing by mocking config.
      */
@@ -37,7 +39,7 @@ public class TieredMemoryPool {
         boolean isDebugMode();
     }
 
-    private static ConfigProvider config = new ConfigProvider() {
+    private ConfigProvider config = new ConfigProvider() {
         @Override public boolean isPoolingEnabled() { return LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get(); }
         @Override public boolean isTieredPoolingEnabled() { return LayeredTerrainConfig.ENABLE_TIERED_POOLING.get(); }
         @Override public int getHotTierSize() { return LayeredTerrainConfig.POOL_HOT_TIER_SIZE.get(); }
@@ -49,29 +51,40 @@ public class TieredMemoryPool {
     };
 
     // Three-tier pool: Hot (frequently used) -> Warm -> Cold (rarely used)
-    private static final ConcurrentLinkedQueue<PooledHeightmap> hotTier = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<PooledHeightmap> warmTier = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<PooledHeightmap> coldTier = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<PooledHeightmap> hotTier = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<PooledHeightmap> warmTier = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<PooledHeightmap> coldTier = new ConcurrentLinkedQueue<>();
 
-    private static final AtomicInteger hotTierSize = new AtomicInteger(0);
-    private static final AtomicInteger warmTierSize = new AtomicInteger(0);
-    private static final AtomicInteger coldTierSize = new AtomicInteger(0);
+    private final AtomicInteger hotTierSize = new AtomicInteger(0);
+    private final AtomicInteger warmTierSize = new AtomicInteger(0);
+    private final AtomicInteger coldTierSize = new AtomicInteger(0);
 
-    private static final AtomicLong totalAllocations = new AtomicLong(0);
-    private static final AtomicLong hotTierHits = new AtomicLong(0);
-    private static final AtomicLong warmTierHits = new AtomicLong(0);
-    private static final AtomicLong coldTierHits = new AtomicLong(0);
-    private static final AtomicLong poolMisses = new AtomicLong(0);
-    private static final AtomicLong promotions = new AtomicLong(0);
-    private static final AtomicLong demotions = new AtomicLong(0);
+    private final AtomicLong totalAllocations = new AtomicLong(0);
+    private final AtomicLong hotTierHits = new AtomicLong(0);
+    private final AtomicLong warmTierHits = new AtomicLong(0);
+    private final AtomicLong coldTierHits = new AtomicLong(0);
+    private final AtomicLong poolMisses = new AtomicLong(0);
+    private final AtomicLong promotions = new AtomicLong(0);
+    private final AtomicLong demotions = new AtomicLong(0);
 
-    private static int maxHotTierSize;
-    private static int maxWarmTierSize;
-    private static int maxColdTierSize;
-    private static boolean enabled;
-    private static boolean tieredEnabled;
+    private int maxHotTierSize;
+    private int maxWarmTierSize;
+    private int maxColdTierSize;
+    private boolean enabled;
+    private boolean tieredEnabled;
 
-    private static long lastCleanup = System.currentTimeMillis();
+    private long lastCleanup = System.currentTimeMillis();
+
+    private TieredMemoryPool() {}
+
+    public static TieredMemoryPool getInstance() {
+        return INSTANCE;
+    }
+
+    // Visible for testing
+    void setConfigProvider(ConfigProvider configProvider) {
+        this.config = configProvider;
+    }
 
     static class PooledHeightmap {
         final int[][] data;
@@ -98,7 +111,7 @@ public class TieredMemoryPool {
      *
      * <p>Pre-allocates the hot tier to ensure immediate availability of resources.</p>
      */
-    public static void initialize() {
+    public void initialize() {
         enabled = config.isPoolingEnabled();
         tieredEnabled = config.isTieredPoolingEnabled();
 
@@ -147,7 +160,7 @@ public class TieredMemoryPool {
      *
      * @return A 16x16 integer array, zeroed out if retrieved from pool.
      */
-    public static int[][] acquire() {
+    public int[][] acquire() {
         if (!enabled) {
             totalAllocations.incrementAndGet();
             return new int[16][16];
@@ -216,7 +229,7 @@ public class TieredMemoryPool {
      *
      * @param data The 16x16 array to release.
      */
-    public static void release(int[][] data) {
+    public void release(int[][] data) {
         if (!enabled || data == null) {
             return;
         }
@@ -264,7 +277,7 @@ public class TieredMemoryPool {
     /**
      * Periodic cleanup of cold tier
      */
-    private static void periodicCleanup() {
+    private void periodicCleanup() {
         long now = System.currentTimeMillis();
         long interval = config.getCleanupIntervalSeconds() * 1000L;
 
@@ -305,7 +318,7 @@ public class TieredMemoryPool {
     /**
      * Demote underutilized items from warm to cold tier
      */
-    private static void performDemotions(long threshold) {
+    private void performDemotions(long threshold) {
         if (!tieredEnabled) return;
 
         int demoted = 0;
@@ -343,7 +356,7 @@ public class TieredMemoryPool {
     /**
      * Reconfigure pool on config reload
      */
-    public static void reconfigure() {
+    public void reconfigure() {
         LayeredTerrainMod.LOGGER.info("Reconfiguring memory pool...");
 
         enabled = config.isPoolingEnabled();
@@ -366,7 +379,7 @@ public class TieredMemoryPool {
     /**
      * Get pool statistics
      */
-    public static PoolStats getStats() {
+    public PoolStats getStats() {
         return new PoolStats(
             hotTierSize.get(),
             warmTierSize.get(),
@@ -459,7 +472,7 @@ public class TieredMemoryPool {
     /**
      * Print detailed statistics
      */
-    public static void printStats() {
+    public void printStats() {
         if (!enabled) return;
 
         PoolStats stats = getStats();
@@ -516,7 +529,7 @@ public class TieredMemoryPool {
     /**
      * Shutdown and cleanup
      */
-    public static void shutdown() {
+    public void shutdown() {
         hotTier.clear();
         warmTier.clear();
         coldTier.clear();

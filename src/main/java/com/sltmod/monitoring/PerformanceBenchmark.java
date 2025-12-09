@@ -47,8 +47,8 @@ public class PerformanceBenchmark {
 
         for (int i = 0; i < iterations; i++) {
             long start = System.nanoTime();
-            int[][] arr = TieredMemoryPool.acquire();
-            TieredMemoryPool.release(arr);
+            int[][] arr = TieredMemoryPool.getInstance().acquire();
+            TieredMemoryPool.getInstance().release(arr);
             totalTime += System.nanoTime() - start;
         }
 

@@ -923,6 +923,10 @@ public class LayeredTerrainConfig {
         SPEC = BUILDER.build();
 
         // Initialize file watcher for hot-reload
+        // Moved to explicit call to avoid FMLPaths access during static init
+    }
+
+    public static void initFileWatcher() {
         initializeFileWatcher();
     }
 
@@ -935,7 +939,14 @@ public class LayeredTerrainConfig {
         try {
             if (!ENABLE_HOT_RELOAD.get()) return;
 
-            Path configDir = FMLPaths.CONFIGDIR.get();
+            Path configDir;
+            try {
+                 configDir = FMLPaths.CONFIGDIR.get();
+            } catch (Exception e) {
+                // Likely running in test environment without FML
+                return;
+            }
+
             watchService = FileSystems.getDefault().newWatchService();
             watchKey = configDir.register(
                 watchService,
@@ -998,7 +1009,13 @@ public class LayeredTerrainConfig {
                 }
                 lastReloadCheck = now;
 
-                Path configPath = FMLPaths.CONFIGDIR.get().resolve("layered-terrain.toml");
+                Path configPath;
+                try {
+                    configPath = FMLPaths.CONFIGDIR.get().resolve("layered-terrain.toml");
+                } catch (Exception e) {
+                    return;
+                }
+
                 if (Files.exists(configPath)) {
                     FileTime currentModified = Files.getLastModifiedTime(configPath);
 
@@ -1049,7 +1066,7 @@ public class LayeredTerrainConfig {
 
             // Re-initialize affected systems
             if (ENABLE_MEMORY_POOLING.get()) {
-                TieredMemoryPool.reconfigure();
+                TieredMemoryPool.getInstance().reconfigure();
             }
 
             if (ENABLE_LOAD_BALANCING.get()) {

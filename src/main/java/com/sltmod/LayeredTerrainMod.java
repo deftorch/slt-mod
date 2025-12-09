@@ -36,11 +36,9 @@ import com.sltmod.reliability.CircuitBreakerAdvanced;
  * <p>The mod transforms vanilla Minecraft terrain into smooth, layered landscapes using
  * sophisticated algorithms and efficient processing.</p>
  */
-@Mod("layeredterrain")
+@Mod(Reference.MOD_ID)
 public class LayeredTerrainMod {
 
-    public static final String MOD_ID = "layeredterrain";
-    public static final String VERSION = "3.2.0";
     public static final Logger LOGGER = LogManager.getLogger();
 
     private static long initStartTime;
@@ -62,12 +60,15 @@ public class LayeredTerrainMod {
             "layered-terrain.toml"
         );
 
+        // Initialize file watcher
+        LayeredTerrainConfig.initFileWatcher();
+
         modEventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(LayeredTerrainSystem.class);
 
         LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  Layered Terrain System v{} Initializing...    ║", VERSION);
+        LOGGER.info("║  Layered Terrain System v{} Initializing...    ║", Reference.VERSION);
         LOGGER.info("╚════════════════════════════════════════════════════╝");
     }
 
@@ -84,7 +85,7 @@ public class LayeredTerrainMod {
             try {
                 // Initialize all systems in dependency order
                 LayerRegistry.initialize();
-                TieredMemoryPool.initialize();
+                TieredMemoryPool.getInstance().initialize();
                 CircuitBreakerAdvanced.initialize();
                 Metrics.initialize();
                 ProfilingMetrics.initialize();
@@ -147,7 +148,7 @@ public class LayeredTerrainMod {
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
         LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  LAYERED TERRAIN SYSTEM v{} STARTED            ║", VERSION);
+        LOGGER.info("║  LAYERED TERRAIN SYSTEM v{} STARTED            ║", Reference.VERSION);
         LOGGER.info("╠════════════════════════════════════════════════════╣");
         LOGGER.info("║  Edition: ULTIMATE HYBRID                          ║");
         LOGGER.info("╠════════════════════════════════════════════════════╣");
@@ -200,14 +201,14 @@ public class LayeredTerrainMod {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         LOGGER.info("╔════════════════════════════════════════════════════╗");
-        LOGGER.info("║  Shutting down Layered Terrain System v{}...   ║", VERSION);
+        LOGGER.info("║  Shutting down Layered Terrain System v{}...   ║", Reference.VERSION);
         LOGGER.info("╚════════════════════════════════════════════════════╝");
 
         try {
             // Graceful shutdown in reverse dependency order
             AsyncProcessor.shutdown();
             LoadBalancer.shutdown();
-            TieredMemoryPool.shutdown();
+            TieredMemoryPool.getInstance().shutdown();
 
             if (LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get()) {
                 GPUAccelerator.shutdown();
@@ -225,7 +226,7 @@ public class LayeredTerrainMod {
             Metrics.printFinalReport();
             ProfilingMetrics.printDetailedReport();
             CircuitBreakerAdvanced.printStats();
-            TieredMemoryPool.printStats();
+            TieredMemoryPool.getInstance().printStats();
 
             LOGGER.info("✅ Layered Terrain System shutdown complete");
 

@@ -186,7 +186,7 @@ public class Metrics {
     private static void printAdditionalStats() {
         // Memory pool stats
         if (LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get()) {
-            TieredMemoryPool.PoolStats poolStats = TieredMemoryPool.getStats();
+            TieredMemoryPool.PoolStats poolStats = TieredMemoryPool.getInstance().getStats();
             LayeredTerrainMod.LOGGER.info("Memory Pool Hit Rate: {:.1f}%", poolStats.getHitRate());
         }
 
