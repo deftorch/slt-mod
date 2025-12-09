@@ -3,36 +3,36 @@
 ## ✅ Prioritas 1: Kritis (Timeline: 1-3 hari)
 **Kriteria:** Stabilitas sistem, pencegahan regresi, struktur dasar.
 
-- [ ] **[TEST]** Buat Unit Test untuk `Smoother.java`
+- [x] **[TEST]** Buat Unit Test untuk `Smoother.java`
     - *Mengapa:* Algoritma inti mod, risiko visual bug tinggi.
     - *Target:* Test semua `SmoothingType`.
-- [ ] **[TEST]** Buat Unit Test untuk `CircuitBreakerAdvanced.java`
+- [x] **[TEST]** Buat Unit Test untuk `CircuitBreakerAdvanced.java`
     - *Mengapa:* Logika state machine (Open/Half-Open/Closed) krusial untuk mencegah crash cascading.
-- [ ] **[ARCH]** Refactor Struktur Paket (Package Organization)
+- [x] **[ARCH]** Refactor Struktur Paket (Package Organization)
     - *Mengapa:* Memecah monolit `com.sltmod` menjadi sub-paket (`config`, `processing`, `memory`, `util`) untuk navigasi dan modularitas yang lebih baik.
     - *Action:* Move files & update `package` declarations.
 
 **Definition of Done untuk Priority 1:**
-- [ ] Semua file dipindahkan ke paket yang sesuai.
-- [ ] Mod dapat dicompile dan dijalankan tanpa error import.
-- [ ] Unit test baru passing.
+- [x] Semua file dipindahkan ke paket yang sesuai.
+- [x] Mod dapat dicompile dan dijalankan tanpa error import.
+- [x] Unit test baru passing.
 
 ## ✅ Prioritas 2: Fondasi (Timeline: 1-2 minggu)
 **Kriteria:** Peningkatan arsitektur, pengurangan *code smells*.
 
-- [ ] **[REFACTOR]** Ubah `TieredMemoryPool` menjadi Singleton Pattern
+- [x] **[REFACTOR]** Ubah `TieredMemoryPool` menjadi Singleton Pattern
     - *Mengapa:* Menghilangkan ketergantungan pada *static fields* dan memudahkan mocking tanpa refleksi.
-- [ ] **[TEST]** Buat Unit Test untuk `AsyncProcessor.java`
+- [x] **[TEST]** Buat Unit Test untuk `AsyncProcessor.java`
     - *Mengapa:* Memastikan concurrency logic (timeouts, queue handling) berjalan benar.
-- [ ] **[QUALITY]** Sentralisasi Konstanta Mod
+- [x] **[QUALITY]** Sentralisasi Konstanta Mod
     - *Mengapa:* String `MOD_ID` dan `VERSION` tersebar. Buat kelas `Reference.java` atau `Constants.java`.
-- [ ] **[SECURITY]** Tambahkan validasi statis untuk `FMLPaths` di Config
+- [x] **[SECURITY]** Tambahkan validasi statis untuk `FMLPaths` di Config
     - *Mengapa:* Memperkuat *defensive coding* pada static initializer `LayeredTerrainConfig`.
 
 **Definition of Done untuk Priority 2:**
-- [ ] `TieredMemoryPool` diakses via `getInstance()`.
-- [ ] Test coverage meningkat ke >50%.
-- [ ] Tidak ada string magic untuk MOD_ID.
+- [x] `TieredMemoryPool` diakses via `getInstance()`.
+- [x] Test coverage meningkat ke >50%.
+- [x] Tidak ada string magic untuk MOD_ID.
 
 ## ✅ Prioritas 3: Peningkatan (Timeline: 1-4 minggu)
 **Kriteria:** DX, Dokumentasi, Polish.
@@ -52,8 +52,8 @@
 - [x] CI pipeline aktif (jika repo di-host).
 
 ## Progress Tracking
-- **Priority 1:** ⬜ 0/3 completed (Target: TBD)
-- **Priority 2:** ⬜ 0/4 completed (Target: TBD)
+- **Priority 1:** ✅ 3/3 completed (Target: TBD)
+- **Priority 2:** ✅ 4/4 completed (Target: TBD)
 - **Priority 3:** ✅ 4/4 completed (Target: TBD)
 
 ## Notes & Dependencies
