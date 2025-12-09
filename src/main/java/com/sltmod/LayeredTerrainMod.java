@@ -13,6 +13,20 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.sltmod.async.AsyncProcessor;
+import com.sltmod.async.LoadBalancer;
+import com.sltmod.config.LayeredTerrainConfig;
+import com.sltmod.integration.LayerRegistry;
+import com.sltmod.integration.LayeredTerrainSystem;
+import com.sltmod.memory.TieredMemoryPool;
+import com.sltmod.monitoring.Metrics;
+import com.sltmod.monitoring.ProfilingMetrics;
+import com.sltmod.monitoring.PrometheusExporter;
+import com.sltmod.monitoring.SystemDiagnostics;
+import com.sltmod.processing.GPUAccelerator;
+import com.sltmod.processing.MLPredictor;
+import com.sltmod.reliability.CircuitBreakerAdvanced;
+
 /**
  * Main mod class for the Layered Terrain System.
  *
