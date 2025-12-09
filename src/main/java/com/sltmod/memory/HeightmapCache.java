@@ -69,7 +69,7 @@ public class HeightmapCache {
         }
 
         // Acquire from pool
-        this.heightMap = TieredMemoryPool.acquire();
+        this.heightMap = TieredMemoryPool.getInstance().acquire();
         this.fromPool = LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get();
 
         // Compute heights
@@ -254,7 +254,7 @@ public class HeightmapCache {
      */
     public void release() {
         if (fromPool && heightMap != null) {
-            TieredMemoryPool.release(heightMap);
+            TieredMemoryPool.getInstance().release(heightMap);
             heightMap = null;
         }
 

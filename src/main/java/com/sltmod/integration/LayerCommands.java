@@ -114,7 +114,7 @@ public class LayerCommands {
                 .then(Commands.literal("pool")
                     .executes(ctx -> {
                         if (LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get()) {
-                            TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+                            TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
 
                             ctx.getSource().sendSuccess(
                                 () -> Component.literal(String.format(
@@ -124,7 +124,7 @@ public class LayerCommands {
                                 false
                             );
 
-                            TieredMemoryPool.printStats();
+                            TieredMemoryPool.getInstance().printStats();
                         } else {
                             ctx.getSource().sendFailure(
                                 Component.literal("❌ Memory pooling is disabled")
@@ -372,7 +372,7 @@ public class LayerCommands {
         LayeredTerrainMod.LOGGER.info("║  Component Status:                                 ║");
 
         if (LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get()) {
-            TieredMemoryPool.PoolStats poolStats = TieredMemoryPool.getStats();
+            TieredMemoryPool.PoolStats poolStats = TieredMemoryPool.getInstance().getStats();
             LayeredTerrainMod.LOGGER.info("║    Memory Pool: {} items, {:.1f}% hit rate      ",
                 poolStats.getTotalSize(), poolStats.getHitRate());
         }

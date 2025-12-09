@@ -210,7 +210,7 @@ public class SystemDiagnostics {
             return;
         }
 
-        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
         double hitRate = stats.getHitRate();
 
         if (hitRate < 50) {
