@@ -16,6 +16,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import java.util.concurrent.CompletableFuture;
 
 import com.sltmod.LayeredTerrainMod;
+import com.sltmod.Reference;
 import com.sltmod.async.AsyncProcessor;
 import com.sltmod.async.LoadBalancer;
 import com.sltmod.async.QueueManager;
@@ -307,7 +308,7 @@ public class LayerCommands {
                     .executes(ctx -> {
                         ctx.getSource().sendSuccess(
                             () -> Component.literal(
-                                "Layered Terrain System v" + LayeredTerrainMod.VERSION +
+                                "Layered Terrain System v" + Reference.VERSION +
                                 " - Ultimate Hybrid Edition"
                             ),
                             false
@@ -363,7 +364,7 @@ public class LayerCommands {
 
         // System info
         LayeredTerrainMod.LOGGER.info("║  Version: {}                                    ",
-            LayeredTerrainMod.VERSION);
+            Reference.VERSION);
         LayeredTerrainMod.LOGGER.info("║  Enabled: {}                                      ",
             LayeredTerrainConfig.ENABLED.get());
 

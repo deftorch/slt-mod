@@ -77,13 +77,13 @@ public class IntegrationTests {
             }
 
             // Acquire and release
-            int[][] arr1 = TieredMemoryPool.acquire();
+            int[][] arr1 = TieredMemoryPool.getInstance().acquire();
             assertNotNull(arr1, "Acquired array should not be null");
 
-            TieredMemoryPool.release(arr1);
+            TieredMemoryPool.getInstance().release(arr1);
 
             // Check stats
-            TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+            TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
             assertTrue(stats.totalAllocations > 0, "Should have allocations");
         });
     }
@@ -219,7 +219,7 @@ public class IntegrationTests {
             List<Future<?>> futures = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
                 futures.add(executor.submit(() -> {
-                    TieredMemoryPool.acquire();
+                    TieredMemoryPool.getInstance().acquire();
                     Metrics.recordChunkSkipped();
                 }));
             }
@@ -238,8 +238,8 @@ public class IntegrationTests {
             long start = System.nanoTime();
 
             for (int i = 0; i < 100; i++) {
-                int[][] arr = TieredMemoryPool.acquire();
-                TieredMemoryPool.release(arr);
+                int[][] arr = TieredMemoryPool.getInstance().acquire();
+                TieredMemoryPool.getInstance().release(arr);
             }
 
             long duration = System.nanoTime() - start;

@@ -28,6 +28,31 @@ public class HeightmapCache {
     private static final int GRID_5X5 = 5;
     private static final int GRID_7X7 = 7;
 
+    // Configuration Provider for testing
+    public interface ConfigProvider {
+        boolean use7x7Sampling();
+        boolean use5x5Sampling();
+        boolean isPoolingEnabled();
+        boolean isProfilingEnabled();
+        boolean isDebugMode();
+    }
+
+    private static ConfigProvider configProvider = new ConfigProvider() {
+        @Override public boolean use7x7Sampling() { return LayeredTerrainConfig.USE_7X7_SAMPLING.get(); }
+        @Override public boolean use5x5Sampling() { return LayeredTerrainConfig.USE_5X5_SAMPLING.get(); }
+        @Override public boolean isPoolingEnabled() { return LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get(); }
+        @Override public boolean isProfilingEnabled() { return LayeredTerrainConfig.ENABLE_PROFILING.get(); }
+        @Override public boolean isDebugMode() { return LayeredTerrainConfig.DEBUG_MODE.get(); }
+    };
+
+    /**
+     * Sets the configuration provider. Used for testing.
+     * @param provider The new configuration provider.
+     */
+    public static void setConfigProvider(ConfigProvider provider) {
+        configProvider = provider;
+    }
+
     private int[][] heightMap;
     private final ChunkAccess chunk;
     private final ServerLevel level;
@@ -60,9 +85,9 @@ public class HeightmapCache {
         this.creationTime = System.nanoTime();
 
         // Determine grid size from config
-        if (LayeredTerrainConfig.USE_7X7_SAMPLING.get()) {
+        if (configProvider.use7x7Sampling()) {
             this.gridSize = GRID_7X7;
-        } else if (LayeredTerrainConfig.USE_5X5_SAMPLING.get()) {
+        } else if (configProvider.use5x5Sampling()) {
             this.gridSize = GRID_5X5;
         } else {
             this.gridSize = GRID_3X3;
@@ -70,7 +95,7 @@ public class HeightmapCache {
 
         // Acquire from pool
         this.heightMap = TieredMemoryPool.getInstance().acquire();
-        this.fromPool = LayeredTerrainConfig.ENABLE_MEMORY_POOLING.get();
+        this.fromPool = configProvider.isPoolingEnabled();
 
         // Compute heights
         computeHeights();
@@ -88,7 +113,7 @@ public class HeightmapCache {
             }
         }
 
-        if (LayeredTerrainConfig.ENABLE_PROFILING.get()) {
+        if (configProvider.isProfilingEnabled()) {
             long duration = System.nanoTime() - startTime;
             ProfilingMetrics.record("heightmap_cache_compute", duration);
         }
@@ -262,7 +287,7 @@ public class HeightmapCache {
         neighborCache.clear();
 
         // Log statistics if debug enabled
-        if (LayeredTerrainConfig.DEBUG_MODE.get()) {
+        if (configProvider.isDebugMode()) {
             CacheStats stats = getStats();
             if (stats.neighborLookups > 0) {
                 LayeredTerrainMod.LOGGER.debug(

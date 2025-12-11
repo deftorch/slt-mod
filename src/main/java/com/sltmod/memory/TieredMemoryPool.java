@@ -28,7 +28,7 @@ public class TieredMemoryPool {
     /**
      * Interface for providing configuration values. Allows for easier testing by mocking config.
      */
-    interface ConfigProvider {
+    public interface ConfigProvider {
         boolean isPoolingEnabled();
         boolean isTieredPoolingEnabled();
         int getHotTierSize();
@@ -81,8 +81,11 @@ public class TieredMemoryPool {
         return INSTANCE;
     }
 
-    // Visible for testing
-    void setConfigProvider(ConfigProvider configProvider) {
+    /**
+     * Sets the configuration provider. Used for testing.
+     * @param configProvider The new configuration provider.
+     */
+    public void setConfigProvider(ConfigProvider configProvider) {
         this.config = configProvider;
     }
 
