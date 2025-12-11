@@ -106,6 +106,7 @@ public class CircuitBreakerAdvanced {
         totalSuccesses.set(0);
         rejectedRequests.set(0);
         Arrays.fill(recentResults, true);
+        windowIndex.set(0);
 
         LayeredTerrainMod.LOGGER.info("Advanced circuit breaker initialized");
     }

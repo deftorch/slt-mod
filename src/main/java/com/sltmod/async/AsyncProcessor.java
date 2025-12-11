@@ -39,6 +39,39 @@ public class AsyncProcessor {
     private static final AtomicLong calculationsTimedOut = new AtomicLong(0);
     private static final AtomicLong calculationsFailed = new AtomicLong(0);
 
+    // Configuration Provider for testing
+    public interface ConfigProvider {
+        int getWorkerThreads();
+        boolean isLoadBalancingEnabled();
+        boolean isDebugMode();
+        long getCalculationTimeoutMs();
+        boolean isLogSlowChunks();
+        int getSlowChunkThresholdMs();
+        int getSmoothingPasses();
+        int getMaxDifferential();
+        int getPlayerChunkPriorityRadius();
+    }
+
+    private static ConfigProvider configProvider = new ConfigProvider() {
+        @Override public int getWorkerThreads() { return LayeredTerrainConfig.WORKER_THREADS.get(); }
+        @Override public boolean isLoadBalancingEnabled() { return LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get(); }
+        @Override public boolean isDebugMode() { return LayeredTerrainConfig.DEBUG_MODE.get(); }
+        @Override public long getCalculationTimeoutMs() { return LayeredTerrainConfig.CALCULATION_TIMEOUT_MS.get(); }
+        @Override public boolean isLogSlowChunks() { return LayeredTerrainConfig.LOG_SLOW_CHUNKS.get(); }
+        @Override public int getSlowChunkThresholdMs() { return LayeredTerrainConfig.SLOW_CHUNK_THRESHOLD_MS.get(); }
+        @Override public int getSmoothingPasses() { return LayeredTerrainConfig.SMOOTHING_PASSES.get(); }
+        @Override public int getMaxDifferential() { return LayeredTerrainConfig.MAX_DIFFERENTIAL.get(); }
+        @Override public int getPlayerChunkPriorityRadius() { return LayeredTerrainConfig.PLAYER_CHUNK_PRIORITY_RADIUS.get(); }
+    };
+
+    /**
+     * Sets the configuration provider. Used for testing.
+     * @param provider The new configuration provider.
+     */
+    public static void setConfigProvider(ConfigProvider provider) {
+        configProvider = provider;
+    }
+
     /**
      * Initializes the async processor and its thread pool.
      *
@@ -46,7 +79,7 @@ public class AsyncProcessor {
      * Also initializes the {@link Smoother}'s thread pool.</p>
      */
     public static void initialize() {
-        int threads = LayeredTerrainConfig.WORKER_THREADS.get();
+        int threads = configProvider.getWorkerThreads();
         if (threads == 0) {
             threads = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
         }
@@ -65,6 +98,17 @@ public class AsyncProcessor {
     }
 
     /**
+     * Sets the executor service. Used for testing.
+     * @param executor The executor service to use.
+     */
+    public static void setExecutor(ExecutorService executor) {
+        if (CALCULATOR != null && !CALCULATOR.isShutdown()) {
+            CALCULATOR.shutdown();
+        }
+        CALCULATOR = executor;
+    }
+
+    /**
      * Submits a chunk for asynchronous calculation.
      *
      * <p>Checks the circuit breaker status first. If the load balancer is enabled,
@@ -79,7 +123,7 @@ public class AsyncProcessor {
 
         // Check circuit breaker
         if (!CircuitBreakerAdvanced.shouldProcess()) {
-            if (LayeredTerrainConfig.DEBUG_MODE.get()) {
+            if (configProvider.isDebugMode()) {
                 LayeredTerrainMod.LOGGER.debug(
                     "Circuit breaker open, skipping chunk {}", chunk.getPos()
                 );
@@ -88,7 +132,7 @@ public class AsyncProcessor {
         }
 
         // Route through load balancer if enabled
-        if (LayeredTerrainConfig.ENABLE_LOAD_BALANCING.get()) {
+        if (configProvider.isLoadBalancingEnabled()) {
             LoadBalancer.submitChunk(chunk, getNearbyPlayers(chunk));
         } else {
             submitChunkDirect(chunk);
@@ -131,7 +175,7 @@ public class AsyncProcessor {
      */
     static void calculateThicknessMapInternal(LevelChunk chunk, ChunkPos pos) {
         long startTime = System.nanoTime();
-        long timeoutMs = LayeredTerrainConfig.CALCULATION_TIMEOUT_MS.get();
+        long timeoutMs = configProvider.getCalculationTimeoutMs();
 
         HeightmapCache cache = null;
 
@@ -149,8 +193,8 @@ public class AsyncProcessor {
             RESULTS.put(pos, finalThickness, duration);
 
             // Log slow calculations
-            if (LayeredTerrainConfig.LOG_SLOW_CHUNKS.get()) {
-                int threshold = LayeredTerrainConfig.SLOW_CHUNK_THRESHOLD_MS.get();
+            if (configProvider.isLogSlowChunks()) {
+                int threshold = configProvider.getSlowChunkThresholdMs();
                 if (duration > threshold * 1_000_000L) {
                     LayeredTerrainMod.LOGGER.warn(
                         "⚠ Slow calculation: {:.2f}ms for chunk {}",
@@ -198,7 +242,7 @@ public class AsyncProcessor {
                 () -> ThicknessConverter.convertToThickness(normalized, chunk));
 
             // Step 5: Smooth
-            int passes = LayeredTerrainConfig.SMOOTHING_PASSES.get();
+            int passes = configProvider.getSmoothingPasses();
             int[][] smoothed = rawThickness;
 
             for (int pass = 0; pass < passes; pass++) {
@@ -210,7 +254,7 @@ public class AsyncProcessor {
             }
 
             // Step 6: Clamp differentials
-            int maxDiff = LayeredTerrainConfig.MAX_DIFFERENTIAL.get();
+            int maxDiff = configProvider.getMaxDifferential();
             final int[][] finalSmoothed = smoothed;
             int[][] finalThickness = ProfilingMetrics.measure("differential_clamping",
                 () -> Smoother.clampDifferentials(finalSmoothed, maxDiff));
@@ -231,7 +275,7 @@ public class AsyncProcessor {
     private static java.util.Collection<net.minecraft.server.level.ServerPlayer> getNearbyPlayers(LevelChunk chunk) {
         if (chunk.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
             ChunkPos pos = chunk.getPos();
-            int radius = LayeredTerrainConfig.PLAYER_CHUNK_PRIORITY_RADIUS.get();
+            int radius = configProvider.getPlayerChunkPriorityRadius();
 
             return serverLevel.players().stream()
                 .filter(player -> {

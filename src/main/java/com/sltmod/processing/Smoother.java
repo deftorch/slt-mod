@@ -36,6 +36,33 @@ public class Smoother {
     private static final float ANISOTROPIC_ALIGNMENT_WEIGHT = 2.0f;
     private static final int MAX_CLAMPING_ITERATIONS = 5;
 
+    // Configuration Provider for testing
+    public interface ConfigProvider {
+        boolean isMultiThreadedSmoothingEnabled();
+        int getSmoothingThreadPoolSize();
+        LayeredTerrainConfig.SmoothingType getSmoothingType();
+        double getSmoothingStrength();
+        boolean isGpuAccelerationEnabled();
+        boolean isDebugMode();
+    }
+
+    private static ConfigProvider configProvider = new ConfigProvider() {
+        @Override public boolean isMultiThreadedSmoothingEnabled() { return LayeredTerrainConfig.ENABLE_MULTI_THREADED_SMOOTHING.get(); }
+        @Override public int getSmoothingThreadPoolSize() { return LayeredTerrainConfig.SMOOTHING_THREAD_POOL_SIZE.get(); }
+        @Override public LayeredTerrainConfig.SmoothingType getSmoothingType() { return LayeredTerrainConfig.SMOOTHING_TYPE.get(); }
+        @Override public double getSmoothingStrength() { return LayeredTerrainConfig.SMOOTHING_STRENGTH.get(); }
+        @Override public boolean isGpuAccelerationEnabled() { return LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get(); }
+        @Override public boolean isDebugMode() { return LayeredTerrainConfig.DEBUG_MODE.get(); }
+    };
+
+    /**
+     * Sets the configuration provider. Used for testing.
+     * @param provider The new configuration provider.
+     */
+    public static void setConfigProvider(ConfigProvider provider) {
+        configProvider = provider;
+    }
+
     /**
      * Initializes the smoothing thread pool if multi-threaded smoothing is enabled.
      *
@@ -43,7 +70,7 @@ public class Smoother {
      * (defaulting to CPU cores / 4) to handle parallel smoothing tasks.</p>
      */
     public static void initialize() {
-        if (!LayeredTerrainConfig.ENABLE_MULTI_THREADED_SMOOTHING.get()) {
+        if (!configProvider.isMultiThreadedSmoothingEnabled()) {
             return;
         }
 
@@ -52,7 +79,7 @@ public class Smoother {
                 return;
             }
 
-            int threads = LayeredTerrainConfig.SMOOTHING_THREAD_POOL_SIZE.get();
+            int threads = configProvider.getSmoothingThreadPoolSize();
             if (threads == 0) {
                 threads = Math.max(2, Runtime.getRuntime().availableProcessors() / 4);
             }
@@ -83,8 +110,8 @@ public class Smoother {
      * @throws IllegalArgumentException if the input array is invalid.
      */
     public static int[][] smoothThickness(int[][] input, int passes, HeightmapCache cache) {
-        return smoothThickness(input, passes, cache, LayeredTerrainConfig.SMOOTHING_TYPE.get(),
-                LayeredTerrainConfig.SMOOTHING_STRENGTH.get().floatValue());
+        return smoothThickness(input, passes, cache, configProvider.getSmoothingType(),
+                (float) configProvider.getSmoothingStrength());
     }
 
     /**
@@ -112,7 +139,7 @@ public class Smoother {
         }
 
         // Try GPU acceleration first if enabled
-        if (LayeredTerrainConfig.ENABLE_GPU_ACCELERATION.get() &&
+        if (configProvider.isGpuAccelerationEnabled() &&
             GPUAccelerator.isAvailable()) {
             try {
                 int[][] gpuResult = GPUAccelerator.gpuSmooth(input, passes);
@@ -583,7 +610,7 @@ public class Smoother {
             }
         }
 
-        if (LayeredTerrainConfig.DEBUG_MODE.get() && iterations >= MAX_CLAMPING_ITERATIONS) {
+        if (configProvider.isDebugMode() && iterations >= MAX_CLAMPING_ITERATIONS) {
             LayeredTerrainMod.LOGGER.debug(
                 "Differential clamping reached max iterations ({})", iterations
             );
@@ -618,7 +645,7 @@ public class Smoother {
      * Decide if parallel processing is worth it
      */
     private static boolean shouldUseParallel(int currentPass) {
-        return LayeredTerrainConfig.ENABLE_MULTI_THREADED_SMOOTHING.get() &&
+        return configProvider.isMultiThreadedSmoothingEnabled() &&
                smoothingPool != null &&
                currentPass >= 2; // Only parallelize pass 3+
     }

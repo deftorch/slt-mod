@@ -1,4 +1,4 @@
-package com.sltmod;
+package com.sltmod.memory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,8 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import com.sltmod.memory.TieredMemoryPool;
 
 /**
  * Unit tests for the {@link TieredMemoryPool} class.
@@ -48,15 +46,15 @@ public class TieredMemoryPoolTest {
         // Create mock config
         mockConfig = new MockConfigProvider();
 
-        // Inject mock config into TieredMemoryPool
-        setStaticField(TieredMemoryPool.class, "config", mockConfig);
+        // Inject mock config into TieredMemoryPool instance
+        setInstanceField("config", mockConfig);
 
         // Reset TieredMemoryPool state
-        setStaticField(TieredMemoryPool.class, "enabled", true);
-        setStaticField(TieredMemoryPool.class, "tieredEnabled", true);
-        setStaticField(TieredMemoryPool.class, "maxHotTierSize", 10);
-        setStaticField(TieredMemoryPool.class, "maxWarmTierSize", 10);
-        setStaticField(TieredMemoryPool.class, "maxColdTierSize", 10);
+        setInstanceField("enabled", true);
+        setInstanceField("tieredEnabled", true);
+        setInstanceField("maxHotTierSize", 10);
+        setInstanceField("maxWarmTierSize", 10);
+        setInstanceField("maxColdTierSize", 10);
 
         getQueue("hotTier").clear();
         getQueue("warmTier").clear();
@@ -77,12 +75,12 @@ public class TieredMemoryPoolTest {
 
     @Test
     public void testAcquireNew() {
-        int[][] data = TieredMemoryPool.acquire();
+        int[][] data = TieredMemoryPool.getInstance().acquire();
         assertNotNull(data);
         assertEquals(16, data.length);
         assertEquals(16, data[0].length);
 
-        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
         assertEquals(1, stats.totalAllocations);
         assertEquals(1, stats.misses);
     }
@@ -90,20 +88,20 @@ public class TieredMemoryPoolTest {
     @Test
     public void testReleaseAndAcquire() {
         // Acquire (miss)
-        int[][] data = TieredMemoryPool.acquire();
+        int[][] data = TieredMemoryPool.getInstance().acquire();
 
         // Release
-        TieredMemoryPool.release(data);
+        TieredMemoryPool.getInstance().release(data);
 
         // With tieredEnabled=true and fresh release (accessCount=1), it goes to COLD tier
-        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
         assertEquals(1, stats.coldSize, "Should be in cold tier");
 
         // Acquire (should hit cold tier)
-        int[][] data2 = TieredMemoryPool.acquire();
+        int[][] data2 = TieredMemoryPool.getInstance().acquire();
 
         // When acquired from cold, it should be removed from cold
-        stats = TieredMemoryPool.getStats();
+        stats = TieredMemoryPool.getInstance().getStats();
         assertEquals(0, stats.coldSize);
         assertEquals(1, stats.coldHits);
         assertEquals(1, stats.misses); // The first one was a miss
@@ -133,10 +131,10 @@ public class TieredMemoryPoolTest {
         getAtomicInt("coldTierSize").incrementAndGet();
 
         // Acquire - should come from cold tier but be promoted to warm
-        int[][] data = TieredMemoryPool.acquire();
+        int[][] data = TieredMemoryPool.getInstance().acquire();
         assertNotNull(data);
 
-        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getStats();
+        TieredMemoryPool.PoolStats stats = TieredMemoryPool.getInstance().getStats();
         assertEquals(1, stats.coldHits);
         assertEquals(1, stats.promotions);
         assertEquals(1, stats.warmSize, "Should be promoted to warm tier");
@@ -144,26 +142,26 @@ public class TieredMemoryPoolTest {
     }
 
     // Helper methods for reflection
-    private void setStaticField(Class<?> clazz, String fieldName, Object value) throws Exception {
-        Field field = clazz.getDeclaredField(fieldName);
+    private void setInstanceField(String fieldName, Object value) throws Exception {
+        Field field = TieredMemoryPool.class.getDeclaredField(fieldName);
         field.setAccessible(true);
-        field.set(null, value);
+        field.set(TieredMemoryPool.getInstance(), value);
     }
 
     private Queue<?> getQueue(String fieldName) throws Exception {
         Field field = TieredMemoryPool.class.getDeclaredField(fieldName);
         field.setAccessible(true);
-        return (Queue<?>) field.get(null);
+        return (Queue<?>) field.get(TieredMemoryPool.getInstance());
     }
 
     private AtomicInteger getAtomicInt(String fieldName) throws Exception {
         Field field = TieredMemoryPool.class.getDeclaredField(fieldName);
         field.setAccessible(true);
-        return (AtomicInteger) field.get(null);
+        return (AtomicInteger) field.get(TieredMemoryPool.getInstance());
     }
      private AtomicLong getAtomicLong(String fieldName) throws Exception {
         Field field = TieredMemoryPool.class.getDeclaredField(fieldName);
         field.setAccessible(true);
-        return (AtomicLong) field.get(null);
+        return (AtomicLong) field.get(TieredMemoryPool.getInstance());
     }
 }

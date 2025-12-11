@@ -2,10 +2,25 @@ package com.sltmod.processing;
 
 import com.sltmod.config.LayeredTerrainConfig;
 import com.sltmod.memory.HeightmapCache;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SmootherTest {
+
+    @BeforeEach
+    public void setup() {
+        // Setup mock config
+        Smoother.setConfigProvider(new Smoother.ConfigProvider() {
+            @Override public boolean isMultiThreadedSmoothingEnabled() { return false; }
+            @Override public int getSmoothingThreadPoolSize() { return 0; }
+            @Override public LayeredTerrainConfig.SmoothingType getSmoothingType() { return LayeredTerrainConfig.SmoothingType.GAUSSIAN; }
+            @Override public double getSmoothingStrength() { return 1.0; }
+            @Override public boolean isGpuAccelerationEnabled() { return false; }
+            @Override public boolean isDebugMode() { return false; }
+        });
+        Smoother.initialize();
+    }
 
     @Test
     public void testSmoothThicknessGaussian() {
